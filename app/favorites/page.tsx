@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Star, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { useLinks } from "@/hooks/use-links";
 
 export default function Favorites() {
     const { links, updateLink, deleteLink, isLoaded } = useLinks();
+    const [searchQuery, setSearchQuery] = useState("");
 
     if (!isLoaded) return <div className="p-8">Loading...</div>;
 
@@ -21,6 +23,8 @@ export default function Favorites() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search articles..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary/50 text-foreground"
                     />
                 </div>
@@ -45,6 +49,7 @@ export default function Favorites() {
                         columns={columns}
                         data={favoriteLinks}
                         meta={{ onLinkUpdate: updateLink, onLinkDelete: deleteLink }}
+                        searchQuery={searchQuery}
                         emptyStateMessage="No favorites yet. Star some articles you love!"
                         emptyStateIcon={<Star className="h-8 w-8 text-yellow-500/50" />}
                     />

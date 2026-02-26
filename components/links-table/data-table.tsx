@@ -4,6 +4,7 @@ import {
     ColumnDef,
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import { Inbox } from "lucide-react";
@@ -22,6 +23,7 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     meta: DataTableMeta;
+    searchQuery?: string;
     emptyStateMessage?: string;
     emptyStateIcon?: React.ReactNode;
 }
@@ -30,6 +32,7 @@ export function DataTable<TData, TValue>({
     columns,
     data,
     meta,
+    searchQuery = "",
     emptyStateMessage = "No links found.",
     emptyStateIcon = <Inbox className="h-8 w-8 text-muted-foreground/50" />,
 }: DataTableProps<TData, TValue>) {
@@ -37,6 +40,10 @@ export function DataTable<TData, TValue>({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            globalFilter: searchQuery,
+        },
         meta: meta as any,
     });
 
