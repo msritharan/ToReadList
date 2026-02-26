@@ -34,21 +34,21 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // If user is not signed in and the route is not /login or /auth/callback, redirect to /login
+    // If user is not signed in and the route is not / or /auth/callback, redirect to /
     const isAuthRoute =
-        request.nextUrl.pathname.startsWith("/login") ||
+        request.nextUrl.pathname === "/" ||
         request.nextUrl.pathname.startsWith("/auth/callback");
 
     if (!user && !isAuthRoute) {
         const url = request.nextUrl.clone();
-        url.pathname = "/login";
+        url.pathname = "/";
         return NextResponse.redirect(url);
     }
 
-    // If user IS signed in and tries to visit /login, redirect to home
-    if (user && request.nextUrl.pathname === "/login") {
+    // If user IS signed in and tries to visit /, redirect to dashboard
+    if (user && request.nextUrl.pathname === "/") {
         const url = request.nextUrl.clone();
-        url.pathname = "/";
+        url.pathname = "/dashboard";
         return NextResponse.redirect(url);
     }
 

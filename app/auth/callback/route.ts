@@ -14,6 +14,6 @@ export async function GET(request: Request) {
         }
     }
 
-    // Return the user to login on error
-    return NextResponse.redirect(`${origin}/login`);
+    // Return the user to home on error
+    return NextResponse.redirect(`${origin}/`);
 }
