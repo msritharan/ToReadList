@@ -67,5 +67,18 @@ export function useLinks() {
         });
     };
 
-    return { links, updateLink, deleteLink, isLoaded };
+    const addLink = (newLink: Omit<LinkItem, "id" | "created_at">) => {
+        setLinks((prev) => {
+            const link: LinkItem = {
+                ...newLink,
+                id: crypto.randomUUID(),
+                created_at: new Date().toISOString(),
+            };
+            const newLinks = [link, ...prev];
+            localStorage.setItem("toreadlist_links", JSON.stringify(newLinks));
+            return newLinks;
+        });
+    };
+
+    return { links, addLink, updateLink, deleteLink, isLoaded };
 }

@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/links-table/data-table";
 import { columns } from "@/components/links-table/columns";
+import { AddLinkDialog } from "@/components/add-link-dialog";
 import { useLinks } from "@/hooks/use-links";
 
 export default function History() {
-    const { links, updateLink, deleteLink, isLoaded } = useLinks();
+    const { links, addLink, updateLink, deleteLink, isLoaded } = useLinks();
     const [searchQuery, setSearchQuery] = useState("");
 
     if (!isLoaded) return <div className="p-8">Loading...</div>;
@@ -29,10 +30,15 @@ export default function History() {
                     />
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add Link
-                    </Button>
+                    <AddLinkDialog
+                        onAddLink={addLink}
+                        trigger={
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all gap-2">
+                                <Plus className="h-4 w-4" />
+                                Add Link
+                            </Button>
+                        }
+                    />
                 </div>
             </header>
 
