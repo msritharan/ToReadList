@@ -1,83 +1,98 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LinkItem } from "@/types";
-
-const mockData: LinkItem[] = [
-    {
-        id: "1",
-        url: "https://wired.com/future-of-ai",
-        title: "The Future of AI in Productivity Apps",
-        domain: "wired.com",
-        favicon_url: "https://www.google.com/s2/favicons?domain=wired.com&sz=64",
-        status: "unread",
-        is_favorite: false,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    },
-    {
-        id: "2",
-        url: "https://nytimes.com/deep-work",
-        title: "How to Master Deep Work in a Distracted World",
-        domain: "nytimes.com",
-        favicon_url: "https://www.google.com/s2/favicons?domain=nytimes.com&sz=64",
-        status: "unread",
-        is_favorite: true,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    },
-    {
-        id: "3",
-        url: "https://techcrunch.com/startup-advice",
-        title: "10 Lessons from Y Combinator Founders",
-        domain: "techcrunch.com",
-        favicon_url: "https://www.google.com/s2/favicons?domain=techcrunch.com&sz=64",
-        status: "unread",
-        is_favorite: false,
-        created_at: new Date().toISOString(),
-    },
-];
 
 export function useLinks() {
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    useEffect(() => {
-        const stored = localStorage.getItem("toreadlist_links");
-        if (stored) {
-            setLinks(JSON.parse(stored));
-        } else {
-            setLinks(mockData);
-            localStorage.setItem("toreadlist_links", JSON.stringify(mockData));
+    const fetchLinks = useCallback(async () => {
+        try {
+            const res = await fetch("/api/links");
+            if (!res.ok) throw new Error("Failed to fetch links");
+            const data = await res.json();
+            setLinks(data);
+        } catch (err) {
+            console.error("Error fetching links:", err);
+        } finally {
+            setIsLoaded(true);
         }
-        setIsLoaded(true);
     }, []);
 
-    const updateLink = (id: string, updates: Partial<LinkItem>) => {
-        setLinks((prev) => {
-            const newLinks = prev.map((link) => (link.id === id ? { ...link, ...updates } : link));
-            localStorage.setItem("toreadlist_links", JSON.stringify(newLinks));
-            return newLinks;
-        });
+    useEffect(() => {
+        fetchLinks();
+    }, [fetchLinks]);
+
+    const addLink = async (newLink: Omit<LinkItem, "id" | "created_at">) => {
+        // Optimistic update
+        const tempId = crypto.randomUUID();
+        const optimisticLink: LinkItem = {
+            ...newLink,
+            id: tempId,
+            created_at: new Date().toISOString(),
+        };
+        setLinks((prev) => [optimisticLink, ...prev]);
+
+        try {
+            const res = await fetch("/api/links", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newLink),
+            });
+
+            if (!res.ok) throw new Error("Failed to add link");
+
+            const savedLink = await res.json();
+            // Replace optimistic entry with real data from server
+            setLinks((prev) =>
+                prev.map((link) => (link.id === tempId ? savedLink : link))
+            );
+        } catch (err) {
+            console.error("Error adding link:", err);
+            // Revert optimistic update
+            setLinks((prev) => prev.filter((link) => link.id !== tempId));
+        }
     };
 
-    const deleteLink = (id: string) => {
-        setLinks((prev) => {
-            const newLinks = prev.filter((link) => link.id !== id);
-            localStorage.setItem("toreadlist_links", JSON.stringify(newLinks));
-            return newLinks;
-        });
+    const updateLink = async (id: string, updates: Partial<LinkItem>) => {
+        // Optimistic update
+        const previousLinks = [...links];
+        setLinks((prev) =>
+            prev.map((link) => (link.id === id ? { ...link, ...updates } : link))
+        );
+
+        try {
+            const res = await fetch(`/api/links/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updates),
+            });
+
+            if (!res.ok) throw new Error("Failed to update link");
+        } catch (err) {
+            console.error("Error updating link:", err);
+            // Revert optimistic update
+            setLinks(previousLinks);
+        }
     };
 
-    const addLink = (newLink: Omit<LinkItem, "id" | "created_at">) => {
-        setLinks((prev) => {
-            const link: LinkItem = {
-                ...newLink,
-                id: crypto.randomUUID(),
-                created_at: new Date().toISOString(),
-            };
-            const newLinks = [link, ...prev];
-            localStorage.setItem("toreadlist_links", JSON.stringify(newLinks));
-            return newLinks;
-        });
+    const deleteLink = async (id: string) => {
+        // Optimistic update
+        const previousLinks = [...links];
+        setLinks((prev) => prev.filter((link) => link.id !== id));
+
+        try {
+            const res = await fetch(`/api/links/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) throw new Error("Failed to delete link");
+        } catch (err) {
+            console.error("Error deleting link:", err);
+            // Revert optimistic update
+            setLinks(previousLinks);
+        }
     };
 
     return { links, addLink, updateLink, deleteLink, isLoaded };

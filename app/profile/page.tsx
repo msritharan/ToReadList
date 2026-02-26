@@ -1,18 +1,54 @@
 "use client";
 
-import { LogOut, UserCircle2, Mail, ExternalLink, Calendar } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LogOut, Mail, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLinks } from "@/hooks/use-links";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+
+interface UserProfile {
+    name: string;
+    email: string;
+    avatar_url: string | null;
+    created_at: string;
+}
 
 export default function Profile() {
     const { links, isLoaded } = useLinks();
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                setUser({
+                    name: user.user_metadata?.full_name || user.user_metadata?.name || "User",
+                    email: user.email || "",
+                    avatar_url: user.user_metadata?.avatar_url || null,
+                    created_at: user.created_at,
+                });
+            }
+        });
+    }, []);
+
+    const handleSignOut = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/login");
+    };
 
     if (!isLoaded) return <div className="p-8">Loading...</div>;
 
     const totalLinks = links.length;
     const readLinksCount = links.filter((l) => l.status === "read").length;
     const percentRead = totalLinks === 0 ? 0 : Math.round((readLinksCount / totalLinks) * 100);
+
+    const joinDate = user?.created_at
+        ? new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+        : "";
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -26,26 +62,35 @@ export default function Profile() {
                     <Card className="border-border/40 bg-card/50 overflow-hidden">
                         <div className="h-24 bg-gradient-to-r from-primary/30 to-primary/10 w-full" />
                         <div className="px-6 pb-6 relative">
-                            <div className="h-20 w-20 rounded-full bg-background border-4 border-background flex items-center justify-center absolute -top-10 text-muted-foreground shadow-lg">
-                                <UserCircle2 className="h-16 w-16" />
+                            <div className="h-20 w-20 rounded-full bg-background border-4 border-background flex items-center justify-center absolute -top-10 shadow-lg overflow-hidden">
+                                {user?.avatar_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={user.avatar_url}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-primary/20 text-primary text-2xl font-semibold">
+                                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mt-12 flex justify-between items-start">
                                 <div>
-                                    <h2 className="text-2xl font-semibold">User Profile</h2>
+                                    <h2 className="text-2xl font-semibold">{user?.name || "User"}</h2>
                                     <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
                                         <Mail className="h-4 w-4" />
-                                        <span>user@example.com</span>
+                                        <span>{user?.email || ""}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Joined October 2023</span>
-                                    </div>
+                                    {joinDate && (
+                                        <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>Joined {joinDate}</span>
+                                        </div>
+                                    )}
                                 </div>
-
-                                <Button variant="outline" className="text-muted-foreground hover:text-foreground">
-                                    Edit Profile
-                                </Button>
                             </div>
                         </div>
                     </Card>
@@ -79,16 +124,12 @@ export default function Profile() {
                     <div>
                         <h3 className="text-lg font-medium mb-4">Account Actions</h3>
                         <Card className="border-border/40 bg-card/50">
-                            <CardContent className="p-1 divider-y divide-border/40">
-                                <Button variant="ghost" className="w-full justify-start text-muted-foreground py-6 h-auto rounded-none">
-                                    <ExternalLink className="mr-3 h-5 w-5" />
-                                    <div className="text-left">
-                                        <div className="font-medium text-foreground">Export Data</div>
-                                        <div className="text-xs mt-1">Download a CSV of all your saved links</div>
-                                    </div>
-                                </Button>
-
-                                <Button variant="ghost" className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive py-6 h-auto rounded-none">
+                            <CardContent className="p-1">
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive py-6 h-auto rounded-none"
+                                    onClick={handleSignOut}
+                                >
                                     <LogOut className="mr-3 h-5 w-5" />
                                     <div className="text-left">
                                         <div className="font-medium">Sign Out</div>

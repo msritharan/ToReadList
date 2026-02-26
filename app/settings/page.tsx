@@ -1,43 +1,86 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, MessageSquare, Phone, Smartphone, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Phone, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Settings() {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [isLinked, setIsLinked] = useState(false);
     const [isLinking, setIsLinking] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const linked = localStorage.getItem("toreadlist_whatsapp");
-        if (linked) {
-            setPhoneNumber(linked);
-            setIsLinked(true);
-        }
+        const loadProfile = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("whatsapp_phone")
+                .eq("id", user.id)
+                .single();
+
+            if (profile?.whatsapp_phone) {
+                setPhoneNumber(profile.whatsapp_phone);
+                setIsLinked(true);
+            }
+            setIsLoading(false);
+        };
+        loadProfile();
     }, []);
 
-    const handleLinkDevice = (e: React.FormEvent) => {
+    const handleLinkDevice = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phoneNumber) return;
 
         setIsLinking(true);
-        // Simulate API call
-        setTimeout(() => {
-            localStorage.setItem("toreadlist_whatsapp", phoneNumber);
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Not authenticated");
+
+            const { error } = await supabase
+                .from("profiles")
+                .update({ whatsapp_phone: phoneNumber })
+                .eq("id", user.id);
+
+            if (error) throw error;
+
             setIsLinked(true);
+        } catch (err) {
+            console.error("Error linking device:", err);
+        } finally {
             setIsLinking(false);
-        }, 1000);
+        }
     };
 
-    const handleUnlink = () => {
-        localStorage.removeItem("toreadlist_whatsapp");
-        setPhoneNumber("");
-        setIsLinked(false);
+    const handleUnlink = async () => {
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Not authenticated");
+
+            const { error } = await supabase
+                .from("profiles")
+                .update({ whatsapp_phone: null })
+                .eq("id", user.id);
+
+            if (error) throw error;
+
+            setPhoneNumber("");
+            setIsLinked(false);
+        } catch (err) {
+            console.error("Error unlinking device:", err);
+        }
     };
+
+    if (isLoading) return <div className="p-8">Loading...</div>;
 
     return (
         <div className="flex flex-col h-full bg-background">
