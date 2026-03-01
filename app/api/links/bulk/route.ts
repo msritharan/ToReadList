@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "updates object is required" }, { status: 400 });
     }
 
-    const allowedFields = ["title", "status", "is_favorite", "description"];
+    const allowedFields = ["title", "status", "is_favorite", "description", "deleted_at"];
     const filteredUpdates: Record<string, unknown> = {};
     for (const field of allowedFields) {
         if (field in updates) {
