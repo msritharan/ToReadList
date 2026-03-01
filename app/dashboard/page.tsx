@@ -44,7 +44,7 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
-          <h1 className="text-2xl font-semibold tracking-tight">My Links</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Collection</h1>
 
           <DataTable
             columns={columns}

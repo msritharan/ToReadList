@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
+import { TopNavbar } from "@/components/top-navbar";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -12,11 +12,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <>
-            <Sidebar />
+        <div className="flex flex-col h-full w-full">
+            <TopNavbar />
             <main className="flex-1 overflow-y-auto bg-background">
                 {children}
             </main>
-        </>
+        </div>
     );
 }
