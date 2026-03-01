@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ToReadList
+
+> A personal read-later system: save any link from WhatsApp (or anywhere), auto-extract metadata, and manage your reading queue through a clean web UI.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.local.example` to `.env.local` and fill in:
 
-## Learn More
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Next.js 16** (App Router) + TypeScript
+- **Supabase** (Postgres, Auth, RLS)
+- **Tailwind CSS** + **shadcn/ui**
+- **TanStack Table** for data display
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Current Features
 
-## Deploy on Vercel
+- Google OAuth login
+- Single-page dashboard ("Collection") with all links
+- Inline filter pills: All / Unread / Read / Skipped + Favorites toggle
+- Status tags with colored badges
+- Context-aware row actions (Mark Read, Skip, Favorite, Delete)
+- Add Link dialog with live metadata preview
+- Top navbar with user avatar dropdown (Profile, Settings, Sign Out)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Upcoming: Onboarding Flow & WhatsApp Verification
+
+### Overview
+
+A guided onboarding for new users to connect ingestion channels. WhatsApp is the first channel, with more planned (Email, Telegram, Browser Extension).
+
+### Verification Flow (Zero Cost)
+
+Uses **reverse verification** — the user sends a code TO the bot (a free service message) instead of the bot sending an OTP (which costs money).
+
+```
+1. User enters phone number in the web app
+2. App generates a unique 6-character code and displays it
+3. User sends the code to the WhatsApp bot number
+4. Bot matches the code to the user's account
+5. Bot replies "✅ Verified!" (free service message)
+6. Web app detects verification and redirects to dashboard
+```
+
+### Required Changes
+
+#### Database Migration
+Add to `profiles` table:
+- `whatsapp_verified` (boolean, default false)
+- `verification_code` (text, nullable)
+- `verification_expires_at` (timestamptz, nullable)
+
+#### New API Routes
+| Route | Purpose |
+|-------|---------|
+| `POST /api/verify/start` | Generate verification code, store on profile |
+| `POST /api/verify/check` | Poll verification status |
+| `GET /api/whatsapp/webhook` | Meta webhook challenge response |
+| `POST /api/whatsapp/webhook` | Receive messages, verify codes, handle links |
+
+#### New Pages
+- `/onboarding` — Step-by-step wizard (Welcome → Phone → Verify → Done)
+- Skip option available at every step
+
+#### New Environment Variables
+```
+WHATSAPP_VERIFY_TOKEN=your-webhook-verify-token
+WHATSAPP_ACCESS_TOKEN=your-meta-access-token
+WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
+WHATSAPP_BOT_NUMBER=+1234567890
+```
+
+### Prerequisites
+- Meta Business Account with WhatsApp Cloud API access
+- A dedicated phone number for the bot
+- Webhook URL configured in Meta Developer Console
