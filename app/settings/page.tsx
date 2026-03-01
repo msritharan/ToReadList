@@ -1,77 +1,116 @@
 "use client";
 
-import { MessageSquare, Clock } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageSquare, Send, Clock, Download, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+
+const channels = [
+    {
+        name: "WhatsApp",
+        description: "Forward links to our bot to save them instantly.",
+        icon: MessageSquare,
+        iconColor: "text-green-500",
+        iconBg: "bg-green-500/10",
+        status: "Coming Soon" as const,
+    },
+    {
+        name: "Telegram",
+        description: "Send links to our Telegram bot to add them to your list.",
+        icon: Send,
+        iconColor: "text-blue-400",
+        iconBg: "bg-blue-400/10",
+        status: "Coming Soon" as const,
+    },
+];
 
 export default function Settings() {
     return (
         <div className="flex flex-col h-full bg-background">
-            <header className="px-8 py-6 border-b border-border/40 shrink-0">
-                <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-            </header>
-
             <main className="flex-1 p-8 overflow-auto">
-                <div className="max-w-3xl mx-auto space-y-8">
+                <div className="max-w-2xl mx-auto space-y-10">
 
-                    <div>
-                        <h2 className="text-lg font-medium mb-1">Ingestion Channels</h2>
-                        <p className="text-sm text-muted-foreground mb-6">Connect external apps to automatically save links to your inbox.</p>
-
-                        <Card className="border-border/40 bg-card/50">
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-                                        <MessageSquare className="h-5 w-5" />
+                    {/* ── Ingestion Channels ── */}
+                    <section>
+                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                            Ingestion Channels
+                        </h2>
+                        <div className="space-y-1">
+                            {channels.map((ch) => (
+                                <div
+                                    key={ch.name}
+                                    className="flex items-center gap-4 rounded-lg px-4 py-3.5 transition-colors hover:bg-muted/40"
+                                >
+                                    <div className={`h-9 w-9 flex items-center justify-center rounded-lg ${ch.iconBg}`}>
+                                        <ch.icon className={`h-[18px] w-[18px] ${ch.iconColor}`} />
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <CardTitle className="text-base font-medium">WhatsApp Integration</CardTitle>
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                                                <Clock className="h-3 w-3" />
-                                                Coming Soon
-                                            </span>
-                                        </div>
-                                        <CardDescription>Send links to our bot to instantly save them.</CardDescription>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium">{ch.name}</p>
+                                        <p className="text-xs text-muted-foreground">{ch.description}</p>
                                     </div>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                                        <Clock className="h-3 w-3" />
+                                        {ch.status}
+                                    </span>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="rounded-lg border border-border/30 bg-muted/10 p-4 space-y-3">
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                        We&apos;re building a WhatsApp bot that lets you forward any link and have it saved automatically to your reading list. Stay tuned!
-                                    </p>
-                                    <ul className="text-sm text-muted-foreground/70 space-y-1.5 list-disc ml-5">
-                                        <li>Forward any link to save it instantly</li>
-                                        <li>Get confirmation replies in chat</li>
-                                        <li>Send <code className="bg-muted px-1.5 py-0.5 rounded text-xs">list</code> to see your recents</li>
-                                    </ul>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                            ))}
+                        </div>
+                    </section>
 
                     <Separator className="border-border/40" />
 
-                    <div>
-                        <h2 className="text-lg font-medium mb-1">Preferences</h2>
-                        <p className="text-sm text-muted-foreground mb-6">Customize how ToReadList looks and feels.</p>
+                    {/* ── Preferences ── */}
+                    <section>
+                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                            Preferences
+                        </h2>
+                        <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                            <div>
+                                <p className="text-sm font-medium">Theme</p>
+                                <p className="text-xs text-muted-foreground">Dark aesthetic optimized for reading comfort.</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">
+                                Dark Mode
+                            </span>
+                        </div>
+                    </section>
 
-                        <Card className="border-border/40 bg-card/50">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
+                    <Separator className="border-border/40" />
+
+                    {/* ── Account ── */}
+                    <section>
+                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                            Account
+                        </h2>
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Download className="h-4 w-4 text-muted-foreground" />
                                     <div>
-                                        <p className="font-medium text-sm">Theme</p>
-                                        <p className="text-sm text-muted-foreground">The application forces a dark aesthetic tailored for reading comfort.</p>
+                                        <p className="text-sm font-medium">Export Data</p>
+                                        <p className="text-xs text-muted-foreground">Download a copy of all your saved links.</p>
                                     </div>
-                                    <Button variant="outline" disabled className="opacity-50">
-                                        Dark Mode Only
-                                    </Button>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                                    <Clock className="h-3 w-3" />
+                                    Coming Soon
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Trash2 className="h-4 w-4 text-destructive/70" />
+                                    <div>
+                                        <p className="text-sm font-medium text-destructive">Delete Account</p>
+                                        <p className="text-xs text-muted-foreground">Permanently remove your account and all data.</p>
+                                    </div>
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                                    <Clock className="h-3 w-3" />
+                                    Coming Soon
+                                </span>
+                            </div>
+                        </div>
+                    </section>
 
                 </div>
             </main>

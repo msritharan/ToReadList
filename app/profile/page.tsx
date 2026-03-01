@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LogOut, Mail, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-
 
 interface UserProfile {
     name: string;
@@ -25,7 +22,6 @@ interface LinkStats {
 export default function Profile() {
     const [stats, setStats] = useState<LinkStats>({ total: 0, read: 0, unread: 0, skipped: 0 });
     const [user, setUser] = useState<UserProfile | null>(null);
-    const router = useRouter();
 
     useEffect(() => {
         const supabase = createClient();
@@ -46,12 +42,6 @@ export default function Profile() {
             .catch(console.error);
     }, []);
 
-    const handleSignOut = async () => {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        router.push("/login");
-    };
-
     const percentRead =
         stats.total === 0 ? 0 : Math.round((stats.read / stats.total) * 100);
 
@@ -61,93 +51,68 @@ export default function Profile() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <header className="px-8 py-6 border-b border-border/40 shrink-0">
-                <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
-            </header>
-
             <main className="flex-1 p-8 overflow-auto">
-                <div className="max-w-2xl mx-auto space-y-8">
+                <div className="max-w-2xl mx-auto space-y-10">
 
-                    <Card className="border-border/40 bg-card/50 overflow-hidden">
-                        <div className="h-24 bg-gradient-to-r from-primary/30 to-primary/10 w-full" />
-                        <div className="px-6 pb-6 relative">
-                            <div className="h-20 w-20 rounded-full bg-background border-4 border-background flex items-center justify-center absolute -top-10 shadow-lg overflow-hidden">
-                                {user?.avatar_url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={user.avatar_url}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-primary/20 text-primary text-2xl font-semibold">
-                                        {user?.name?.charAt(0).toUpperCase() || "U"}
-                                    </div>
+                    {/* ── User Info ── */}
+                    <section className="flex items-center gap-5">
+                        <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                            {user?.avatar_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={user.avatar_url}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-xl font-semibold text-primary">
+                                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                                </span>
+                            )}
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-semibold truncate">{user?.name || "User"}</h2>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Mail className="h-3.5 w-3.5" />
+                                    {user?.email}
+                                </span>
+                                {joinDate && (
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        Joined {joinDate}
+                                    </span>
                                 )}
                             </div>
-
-                            <div className="mt-12 flex justify-between items-start">
-                                <div>
-                                    <h2 className="text-2xl font-semibold">{user?.name || "User"}</h2>
-                                    <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
-                                        <Mail className="h-4 w-4" />
-                                        <span>{user?.email || ""}</span>
-                                    </div>
-                                    {joinDate && (
-                                        <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
-                                            <Calendar className="h-4 w-4" />
-                                            <span>Joined {joinDate}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
                         </div>
-                    </Card>
+                    </section>
 
-                    <div>
-                        <h3 className="text-lg font-medium mb-4">Reading Stats</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* ── Reading Stats ── */}
+                    <section>
+                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                            Reading Stats
+                        </h2>
+                        <div className="grid grid-cols-3 gap-3">
                             <Card className="border-border/40 bg-card/50">
-                                <CardContent className="p-6">
-                                    <p className="text-3xl font-bold text-primary">{stats.total}</p>
-                                    <p className="text-sm text-muted-foreground font-medium mt-1">Total Links Saved</p>
+                                <CardContent className="p-5">
+                                    <p className="text-2xl font-bold text-primary">{stats.total}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Links Saved</p>
                                 </CardContent>
                             </Card>
-
                             <Card className="border-border/40 bg-card/50">
-                                <CardContent className="p-6">
-                                    <p className="text-3xl font-bold text-green-500">{stats.read}</p>
-                                    <p className="text-sm text-muted-foreground font-medium mt-1">Articles Read</p>
+                                <CardContent className="p-5">
+                                    <p className="text-2xl font-bold text-green-500">{stats.read}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Articles Read</p>
                                 </CardContent>
                             </Card>
-
                             <Card className="border-border/40 bg-card/50">
-                                <CardContent className="p-6">
-                                    <p className="text-3xl font-bold text-blue-500">{percentRead}%</p>
-                                    <p className="text-sm text-muted-foreground font-medium mt-1">Completion Rate</p>
+                                <CardContent className="p-5">
+                                    <p className="text-2xl font-bold text-blue-500">{percentRead}%</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Completion</p>
                                 </CardContent>
                             </Card>
                         </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-lg font-medium mb-4">Account Actions</h3>
-                        <Card className="border-border/40 bg-card/50">
-                            <CardContent className="p-1">
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive py-6 h-auto rounded-none"
-                                    onClick={handleSignOut}
-                                >
-                                    <LogOut className="mr-3 h-5 w-5" />
-                                    <div className="text-left">
-                                        <div className="font-medium">Sign Out</div>
-                                        <div className="text-xs mt-1 opacity-80">Log out of this device</div>
-                                    </div>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    </section>
 
                 </div>
             </main>
