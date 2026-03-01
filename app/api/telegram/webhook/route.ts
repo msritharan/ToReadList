@@ -7,6 +7,7 @@ import {
     getBotCommand,
     verifyWebhookSecret,
 } from "@/lib/telegram";
+import { extractMetadata } from "@/lib/metadata";
 
 /**
  * POST /api/telegram/webhook
@@ -164,20 +165,31 @@ async function handleUrls(
         return;
     }
 
-    // Save each URL as a link
-    const linksToInsert = urls.map((url) => ({
-        user_id: profile.id,
-        url,
-        title: url, // temporary — will be replaced by metadata extraction
-        source: "telegram",
-        status: "unread",
-        extraction_status: "pending",
-    }));
+    // Extract metadata for each URL (in parallel)
+    const metadataResults = await Promise.all(
+        urls.map((url) => extractMetadata(url))
+    );
+
+    // Build link rows with extracted metadata
+    const linksToInsert = urls.map((url, i) => {
+        const meta = metadataResults[i];
+        return {
+            user_id: profile.id,
+            url,
+            title: meta.title,
+            description: meta.description,
+            domain: meta.domain,
+            favicon_url: meta.favicon_url,
+            source: meta.domain || "telegram",
+            status: "unread",
+            extraction_status: meta.extraction_status,
+        };
+    });
 
     const { data: savedLinks, error: insertError } = await supabase
         .from("links")
         .insert(linksToInsert)
-        .select("id, url");
+        .select("id, url, title");
 
     if (insertError) {
         console.error("[Telegram] Failed to save links:", insertError);
@@ -190,7 +202,8 @@ async function handleUrls(
 
     const count = savedLinks?.length ?? urls.length;
     if (count === 1) {
-        await sendMessage(chatId, "✅ Saved! Check your reading list.");
+        const title = savedLinks?.[0]?.title ?? "your link";
+        await sendMessage(chatId, `✅ Saved: "${title}"\n\nCheck your reading list.`);
     } else {
         await sendMessage(
             chatId,
