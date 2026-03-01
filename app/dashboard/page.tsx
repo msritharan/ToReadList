@@ -46,6 +46,7 @@ export default function Dashboard() {
     updateLink,
     bulkUpdateLinks,
     deleteLink,
+    bulkDeleteLinks,
   } = useLinksQuery();
 
   return (
@@ -82,7 +83,7 @@ export default function Dashboard() {
           <DataTable
             columns={columns}
             data={links}
-            meta={{ onLinkUpdate: updateLink, onBulkUpdate: bulkUpdateLinks, onDeleteLink: deleteLink }}
+            meta={{ onLinkUpdate: updateLink, onBulkUpdate: bulkUpdateLinks, onDeleteLink: deleteLink, onBulkDeleteLink: bulkDeleteLinks }}
             activeStatus={queryState.status}
             showFavoritesOnly={queryState.isFavorite}
             sortOrder={queryState.sortOrder}

@@ -35,6 +35,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ interface DataTableProps<TValue> {
         onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
         onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
         onDeleteLink?: (id: string) => void;
+        onBulkDeleteLink?: (ids: string[]) => void;
         isTrashView?: boolean;
         onRestoreLink?: (id: string) => void;
         onDeleteForever?: (id: string) => void;
@@ -237,6 +239,17 @@ export function DataTable<TValue>({
                                         >
                                             <Star className="mr-2 h-4 w-4 text-muted-foreground" />
                                             Remove from Favorites
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                                            onClick={() => {
+                                                meta.onBulkDeleteLink?.(selectedRows);
+                                                setRowSelection({});
+                                            }}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Move to Trash
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

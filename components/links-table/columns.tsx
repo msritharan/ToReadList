@@ -42,6 +42,7 @@ export interface DataTableMeta {
     onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
     onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
     onDeleteLink?: (id: string) => void;
+    onBulkDeleteLink?: (ids: string[]) => void;
     // Trash specific
     isTrashView?: boolean;
     onRestoreLink?: (id: string) => void;

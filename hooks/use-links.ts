@@ -37,6 +37,7 @@ export interface LinksQueryResult {
     updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
     bulkUpdateLinks: (ids: string[], updates: Partial<LinkItem>) => Promise<void>;
     deleteLink: (id: string) => Promise<void>;
+    bulkDeleteLinks: (ids: string[]) => Promise<void>;
 }
 
 export function useLinksQuery(): LinksQueryResult {
@@ -218,6 +219,30 @@ export function useLinksQuery(): LinksQueryResult {
         [queryState, debouncedSearch, fetchLinks]
     );
 
+    const bulkDeleteLinks = useCallback(
+        async (ids: string[]) => {
+            // Optimistically remove from list
+            setLinks((prev) => prev.filter((link) => !ids.includes(link.id)));
+            setTotal((prev) => Math.max(0, prev - ids.length));
+            try {
+                const res = await fetch("/api/links/bulk", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        ids,
+                        updates: { deleted_at: new Date().toISOString() },
+                    }),
+                });
+                if (!res.ok) throw new Error("Failed to bulk delete links");
+            } catch (err) {
+                console.error("Error bulk deleting links:", err);
+                // Re-fetch to restore correct state
+                await fetchLinks(queryState, debouncedSearch);
+            }
+        },
+        [queryState, debouncedSearch, fetchLinks]
+    );
+
     return {
         links,
         total,
@@ -236,5 +261,6 @@ export function useLinksQuery(): LinksQueryResult {
         updateLink,
         bulkUpdateLinks,
         deleteLink,
+        bulkDeleteLinks,
     };
 }
