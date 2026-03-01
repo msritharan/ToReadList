@@ -2,17 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Inbox, Star, Archive, CheckSquare, Settings, LogOut } from "lucide-react";
+import { BookOpen, Library, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 
 const navItems = [
-    { name: "Inbox", href: "/", icon: Inbox },
-    { name: "Favorites", href: "/favorites", icon: Star },
-    { name: "Archive", href: "/archive", icon: Archive },
-    { name: "History", href: "/history", icon: CheckSquare },
+    { name: "My Links", href: "/dashboard", icon: Library },
 ];
 
 interface UserInfo {
@@ -56,7 +53,7 @@ export function Sidebar() {
 
             <div className="flex flex-col gap-1 flex-1">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
                         <Button
                             key={item.href}

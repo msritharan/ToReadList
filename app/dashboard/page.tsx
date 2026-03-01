@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Inbox as InboxIcon, Plus, Search } from "lucide-react";
+import { BookOpen, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/links-table/data-table";
@@ -14,8 +14,6 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   if (!isLoaded) return <div className="p-8">Loading...</div>;
-
-  const unreadLinks = links.filter((link) => link.status === "unread");
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -46,20 +44,15 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
-            <div className="text-sm text-muted-foreground border border-border/40 bg-muted/20 px-3 py-1 rounded-full">
-              {unreadLinks.length} unread articles
-            </div>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">My Links</h1>
 
           <DataTable
             columns={columns}
-            data={unreadLinks}
+            data={links}
             meta={{ onLinkUpdate: updateLink, onLinkDelete: deleteLink }}
             searchQuery={searchQuery}
-            emptyStateMessage="No unread links. You're all caught up!"
-            emptyStateIcon={<InboxIcon className="h-8 w-8 text-muted-foreground/50" />}
+            emptyStateMessage="No links yet. Add your first link to get started!"
+            emptyStateIcon={<BookOpen className="h-8 w-8 text-muted-foreground/50" />}
           />
         </div>
       </main>

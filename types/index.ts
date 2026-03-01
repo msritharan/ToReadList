@@ -9,7 +9,7 @@ export type LinkItem = {
     content_type?: string;
     extraction_status?: string;
     source?: string;
-    status: "unread" | "read" | "archived" | "wont_read";
+    status: "unread" | "read" | "skipped";
     is_favorite: boolean;
     reading_time_mins?: number;
     read_at?: string;
