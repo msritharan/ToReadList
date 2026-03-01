@@ -22,7 +22,7 @@ export default function Dashboard() {
     setSearch,
     addLink,
     updateLink,
-    deleteLink,
+    bulkUpdateLinks,
   } = useLinksQuery();
 
   return (
@@ -59,7 +59,7 @@ export default function Dashboard() {
           <DataTable
             columns={columns}
             data={links}
-            meta={{ onLinkUpdate: updateLink, onLinkDelete: deleteLink }}
+            meta={{ onLinkUpdate: updateLink, onBulkUpdate: bulkUpdateLinks }}
             activeStatus={queryState.status}
             showFavoritesOnly={queryState.isFavorite}
             isLoading={isLoading}

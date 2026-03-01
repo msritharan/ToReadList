@@ -6,7 +6,8 @@ import {
     getCoreRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Inbox, Loader2, Star } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, Inbox, Loader2, Star, Check, SkipForward, BookOpen, MoreHorizontal } from "lucide-react";
 
 import {
     Table,
@@ -17,8 +18,14 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { DataTableMeta } from "./columns";
+import { DataTableMeta, selectionColumn } from "./columns";
 import { LinkItem } from "@/types";
 import {
     LinkStatus,
@@ -76,15 +83,90 @@ export function DataTable<TValue>({
     emptyStateMessage = "No links found.",
     emptyStateIcon = <Inbox className="h-8 w-8 text-muted-foreground/50" />,
 }: DataTableProps<TValue>) {
+    const [rowSelection, setRowSelection] = useState({});
+
     const table = useReactTable({
         data,
-        columns,
+        columns: [selectionColumn, ...columns],
+        state: { rowSelection },
+        onRowSelectionChange: setRowSelection,
         getCoreRowModel: getCoreRowModel(),
+        getRowId: (row) => row.id,
         meta: meta as any,
     });
 
+    const selectedRows = Object.keys(rowSelection);
+    const selectedCount = selectedRows.length;
+
+    const handleBulkUpdate = (updates: Partial<LinkItem>) => {
+        meta.onBulkUpdate(selectedRows, updates);
+        setRowSelection({});
+    };
+
     return (
         <div className="space-y-4">
+            {/* Bulk Action Bar */}
+            {selectedCount > 0 && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <span className="text-sm font-medium text-primary">
+                        {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
+                    </span>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleBulkUpdate({ status: "read" })}
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                        >
+                            <Check className="h-4 w-4 mr-1.5" />
+                            Mark as Read
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleBulkUpdate({ status: "unread" })}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                        >
+                            <BookOpen className="h-4 w-4 mr-1.5" />
+                            Mark as Unread
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleBulkUpdate({ status: "skipped" })}
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-500/10"
+                        >
+                            <SkipForward className="h-4 w-4 mr-1.5" />
+                            Skip
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4 mr-1.5" />
+                                    More
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[180px] bg-popover">
+                                <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onClick={() => handleBulkUpdate({ is_favorite: true })}
+                                >
+                                    <Star className="mr-2 h-4 w-4 text-yellow-500" />
+                                    Add to Favorites
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onClick={() => handleBulkUpdate({ is_favorite: false })}
+                                >
+                                    <Star className="mr-2 h-4 w-4 text-muted-foreground" />
+                                    Remove from Favorites
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+            )}
+
             {/* Filter Toolbar */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 p-1 rounded-lg bg-muted/30 border border-border/40">

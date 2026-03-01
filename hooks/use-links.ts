@@ -28,7 +28,7 @@ export interface LinksQueryResult {
     setSearch: (search: string) => void;
     addLink: (link: Omit<LinkItem, "id" | "created_at">) => Promise<void>;
     updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
-    deleteLink: (id: string) => Promise<void>;
+    bulkUpdateLinks: (ids: string[], updates: Partial<LinkItem>) => Promise<void>;
 }
 
 export function useLinksQuery(): LinksQueryResult {
@@ -151,24 +151,25 @@ export function useLinksQuery(): LinksQueryResult {
         [links]
     );
 
-    const deleteLink = useCallback(
-        async (id: string) => {
-            // Optimistic remove
+    const bulkUpdateLinks = useCallback(
+        async (ids: string[], updates: Partial<LinkItem>) => {
             const previousLinks = [...links];
-            setLinks((prev) => prev.filter((link) => link.id !== id));
-            setTotal((prev) => prev - 1);
+            setLinks((prev) =>
+                prev.map((link) => (ids.includes(link.id) ? { ...link, ...updates } : link))
+            );
             try {
-                const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
-                if (!res.ok) throw new Error("Failed to delete link");
-                // Re-fetch so page count stays accurate
-                await fetchLinks(queryState, debouncedSearch);
+                const res = await fetch("/api/links/bulk", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ids, updates }),
+                });
+                if (!res.ok) throw new Error("Failed to bulk update links");
             } catch (err) {
-                console.error("Error deleting link:", err);
+                console.error("Error bulk updating links:", err);
                 setLinks(previousLinks);
-                setTotal((prev) => prev + 1);
             }
         },
-        [links, queryState, debouncedSearch, fetchLinks]
+        [links]
     );
 
     return {
@@ -184,6 +185,6 @@ export function useLinksQuery(): LinksQueryResult {
         setSearch,
         addLink,
         updateLink,
-        deleteLink,
+        bulkUpdateLinks,
     };
 }

@@ -6,13 +6,13 @@ import {
     Check,
     MoreHorizontal,
     Star,
-    Trash2,
     Undo2,
     SkipForward,
     BookOpen,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,7 +24,7 @@ import { LinkItem } from "@/types";
 
 export interface DataTableMeta {
     onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
-    onLinkDelete: (id: string) => void;
+    onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
 }
 
 const statusConfig: Record<
@@ -171,17 +171,6 @@ export const columns: ColumnDef<LinkItem>[] = [
                                 <Star className="mr-2 h-4 w-4 text-yellow-500" fill={link.is_favorite ? "currentColor" : "none"} />
                                 {link.is_favorite ? "Unfavorite" : "Favorite"}
                             </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-
-                            {/* Delete */}
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive cursor-pointer focus:bg-destructive/10"
-                                onClick={() => meta.onLinkDelete(link.id)}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -189,3 +178,23 @@ export const columns: ColumnDef<LinkItem>[] = [
         },
     },
 ];
+
+export const selectionColumn: ColumnDef<LinkItem> = {
+    id: "select",
+    header: ({ table }) => (
+        <Checkbox
+            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+        />
+    ),
+    cell: ({ row }) => (
+        <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+        />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+};
