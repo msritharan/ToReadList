@@ -16,6 +16,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const is_favorite = searchParams.get("is_favorite");
     const search = searchParams.get("search");
+    const domain = searchParams.get("domain");
+    const sort_by = searchParams.get("sort_by") ?? "created_at";
+    const sort_order = searchParams.get("sort_order") ?? "desc";
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(
         200,
@@ -23,7 +26,12 @@ export async function GET(request: NextRequest) {
     );
     const offset = (page - 1) * limit;
 
-    // Build the filtered query (shared between count and data fetch)
+    // Validate sort params to prevent injection
+    const allowedSortColumns = ["created_at"];
+    const resolvedSortBy = allowedSortColumns.includes(sort_by) ? sort_by : "created_at";
+    const ascending = sort_order === "asc";
+
+    // Build the filtered query
     let baseQuery = supabase
         .from("links")
         .select("*", { count: "exact" })
@@ -43,8 +51,12 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    if (domain && domain.trim()) {
+        baseQuery = baseQuery.eq("domain", domain.trim());
+    }
+
     const { data, error, count } = await baseQuery
-        .order("created_at", { ascending: false })
+        .order(resolvedSortBy, { ascending })
         .range(offset, offset + limit - 1);
 
     if (error) {

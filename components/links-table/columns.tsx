@@ -1,7 +1,8 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 import {
     Check,
     MoreHorizontal,
@@ -9,6 +10,11 @@ import {
     Undo2,
     SkipForward,
     BookOpen,
+    ArrowUp,
+    ArrowDown,
+    ListFilter,
+    X,
+    Search,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,12 +26,33 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { LinkItem } from "@/types";
+import { SortOrder, LinkStatus } from "@/hooks/use-links";
+import { cn } from "@/lib/utils";
+
+// ─── Column meta ────────────────────────────────────────────────────────────
 
 export interface DataTableMeta {
     onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
     onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
+    // Sort
+    sortOrder: SortOrder;
+    onToggleSortOrder: () => void;
+    // Domain filter
+    domainFilter: string;
+    onDomainFilterChange: (domain: string) => void;
+    availableDomains: string[];
+    // Status filter
+    statusFilter: LinkStatus;
+    onStatusFilterChange: (status: LinkStatus) => void;
 }
+
+// ─── Status config ───────────────────────────────────────────────────────────
 
 const statusConfig: Record<
     LinkItem["status"],
@@ -33,20 +60,226 @@ const statusConfig: Record<
 > = {
     unread: {
         label: "Unread",
-        className:
-            "bg-blue-500/15 text-blue-400 border-blue-500/20",
+        className: "bg-blue-500/15 text-blue-400 border-blue-500/20",
     },
     read: {
         label: "Read",
-        className:
-            "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+        className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
     },
     skipped: {
         label: "Skipped",
-        className:
-            "bg-orange-500/15 text-orange-400 border-orange-500/20",
+        className: "bg-orange-500/15 text-orange-400 border-orange-500/20",
     },
 };
+
+const STATUS_OPTIONS: { value: LinkStatus; label: string }[] = [
+    { value: "all", label: "All" },
+    { value: "unread", label: "Unread" },
+    { value: "read", label: "Read" },
+    { value: "skipped", label: "Skipped" },
+];
+
+// ─── Header helpers ──────────────────────────────────────────────────────────
+
+function SortableDateHeader({ table }: HeaderContext<LinkItem, unknown>) {
+    const meta = table.options.meta as DataTableMeta;
+    const { sortOrder, onToggleSortOrder } = meta;
+
+    return (
+        <button
+            onClick={onToggleSortOrder}
+            className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground font-medium hover:text-foreground transition-colors group"
+        >
+            Date Saved
+            <span className="transition-transform">
+                {sortOrder === "desc" ? (
+                    <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                ) : (
+                    <ArrowUp className="h-3.5 w-3.5 text-primary" />
+                )}
+            </span>
+        </button>
+    );
+}
+
+function DomainFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
+    const meta = table.options.meta as DataTableMeta;
+    const { domainFilter, onDomainFilterChange, availableDomains } = meta;
+    const isActive = domainFilter !== "";
+    const [search, setSearch] = useState("");
+
+    const filtered = availableDomains.filter((d) =>
+        d.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <Popover onOpenChange={() => setSearch("")}>
+            <PopoverTrigger asChild>
+                <button
+                    className={cn(
+                        "flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium hover:text-foreground transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    Source
+                    <ListFilter className={cn("h-3.5 w-3.5", isActive && "text-primary")} />
+                    {isActive && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
+                </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-0 bg-popover border-border/60">
+                {/* Header */}
+                <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b border-border/40">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Filter by Source
+                    </span>
+                    {isActive && (
+                        <button
+                            onClick={() => onDomainFilterChange("")}
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                        >
+                            <X className="h-3 w-3" />
+                            Clear
+                        </button>
+                    )}
+                </div>
+                {/* Search input */}
+                <div className="px-2 pt-2 pb-1">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            autoFocus
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search sources..."
+                            className="w-full pl-7 pr-2 py-1.5 text-sm rounded-md bg-muted/40 border border-border/40 focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/60"
+                        />
+                    </div>
+                </div>
+                {/* Scrollable option list */}
+                <div className="overflow-y-auto max-h-48 px-2 pb-2 space-y-0.5">
+                    {search === "" && (
+                        <button
+                            onClick={() => onDomainFilterChange("")}
+                            className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
+                                domainFilter === ""
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            All sources
+                        </button>
+                    )}
+                    {filtered.map((domain) => (
+                        <button
+                            key={domain}
+                            onClick={() => onDomainFilterChange(domain)}
+                            className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-sm transition-colors truncate",
+                                domainFilter === domain
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            {domain}
+                        </button>
+                    ))}
+                    {filtered.length === 0 && (
+                        <p className="text-xs text-muted-foreground px-2 py-2 italic text-center">
+                            No sources match &ldquo;{search}&rdquo;
+                        </p>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+function StatusFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
+    const meta = table.options.meta as DataTableMeta;
+    const { statusFilter, onStatusFilterChange } = meta;
+    const isActive = statusFilter !== "all";
+    const [search, setSearch] = useState("");
+
+    const filtered = STATUS_OPTIONS.filter((opt) =>
+        opt.label.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <Popover onOpenChange={() => setSearch("")}>
+            <PopoverTrigger asChild>
+                <button
+                    className={cn(
+                        "flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium hover:text-foreground transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    Status
+                    <ListFilter className={cn("h-3.5 w-3.5", isActive && "text-primary")} />
+                    {isActive && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
+                </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-48 p-0 bg-popover border-border/60">
+                {/* Header */}
+                <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b border-border/40">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Filter by Status
+                    </span>
+                    {isActive && (
+                        <button
+                            onClick={() => onStatusFilterChange("all")}
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                        >
+                            <X className="h-3 w-3" />
+                            Clear
+                        </button>
+                    )}
+                </div>
+                {/* Search input */}
+                <div className="px-2 pt-2 pb-1">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            autoFocus
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search status..."
+                            className="w-full pl-7 pr-2 py-1.5 text-sm rounded-md bg-muted/40 border border-border/40 focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/60"
+                        />
+                    </div>
+                </div>
+                {/* Scrollable option list */}
+                <div className="overflow-y-auto max-h-48 px-2 pb-2 space-y-0.5">
+                    {filtered.map((opt) => (
+                        <button
+                            key={opt.value}
+                            onClick={() => onStatusFilterChange(opt.value)}
+                            className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
+                                statusFilter === opt.value
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                    {filtered.length === 0 && (
+                        <p className="text-xs text-muted-foreground px-2 py-2 italic text-center">
+                            No match for &ldquo;{search}&rdquo;
+                        </p>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+// ─── Column definitions ───────────────────────────────────────────────────────
 
 export const columns: ColumnDef<LinkItem>[] = [
     {
@@ -80,12 +313,12 @@ export const columns: ColumnDef<LinkItem>[] = [
     },
     {
         accessorKey: "domain",
-        header: "Source",
+        header: (ctx) => <DomainFilterHeader {...ctx} />,
         cell: ({ row }) => <span className="text-muted-foreground text-sm">{row.original.domain}</span>,
     },
     {
         accessorKey: "status",
-        header: "Status",
+        header: (ctx) => <StatusFilterHeader {...ctx} />,
         cell: ({ row }) => {
             const status = row.original.status;
             const config = statusConfig[status] || statusConfig.unread;
@@ -98,7 +331,7 @@ export const columns: ColumnDef<LinkItem>[] = [
     },
     {
         accessorKey: "created_at",
-        header: "Date Saved",
+        header: (ctx) => <SortableDateHeader {...ctx} />,
         cell: ({ row }) => {
             const dateStr = row.original.created_at;
             const formatted = formatDistanceToNow(new Date(dateStr), { addSuffix: true });
@@ -121,7 +354,6 @@ export const columns: ColumnDef<LinkItem>[] = [
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[180px] bg-popover">
-                            {/* Mark as Read / Unread */}
                             {link.status !== "read" && (
                                 <DropdownMenuItem
                                     className="cursor-pointer"
@@ -141,7 +373,6 @@ export const columns: ColumnDef<LinkItem>[] = [
                                 </DropdownMenuItem>
                             )}
 
-                            {/* Skip / Undo Skip */}
                             {link.status !== "skipped" && (
                                 <DropdownMenuItem
                                     className="cursor-pointer"
@@ -163,7 +394,6 @@ export const columns: ColumnDef<LinkItem>[] = [
 
                             <DropdownMenuSeparator />
 
-                            {/* Favorite toggle */}
                             <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => meta.onLinkUpdate(link.id, { is_favorite: !link.is_favorite })}

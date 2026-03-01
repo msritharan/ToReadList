@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { LinkItem } from "@/types";
 
 export type LinkStatus = "all" | "unread" | "read" | "skipped";
+export type SortOrder = "asc" | "desc";
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
 export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
 
@@ -13,6 +14,9 @@ export interface LinksQueryState {
     status: LinkStatus;
     isFavorite: boolean;
     search: string;
+    sortBy: "created_at";
+    sortOrder: SortOrder;
+    domainFilter: string; // empty string = no filter
 }
 
 export interface LinksQueryResult {
@@ -26,6 +30,9 @@ export interface LinksQueryResult {
     setStatus: (status: LinkStatus) => void;
     setIsFavorite: (val: boolean) => void;
     setSearch: (search: string) => void;
+    setSortOrder: (order: SortOrder) => void;
+    toggleSortOrder: () => void;
+    setDomainFilter: (domain: string) => void;
     addLink: (link: Omit<LinkItem, "id" | "created_at">) => Promise<void>;
     updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
     bulkUpdateLinks: (ids: string[], updates: Partial<LinkItem>) => Promise<void>;
@@ -38,6 +45,9 @@ export function useLinksQuery(): LinksQueryResult {
         status: "unread",
         isFavorite: false,
         search: "",
+        sortBy: "created_at",
+        sortOrder: "desc",
+        domainFilter: "",
     });
 
     const [links, setLinks] = useState<LinkItem[]>([]);
@@ -60,6 +70,9 @@ export function useLinksQuery(): LinksQueryResult {
                 if (state.status !== "all") params.set("status", state.status);
                 if (state.isFavorite) params.set("is_favorite", "true");
                 if (resolvedSearch.trim()) params.set("search", resolvedSearch.trim());
+                params.set("sort_by", state.sortBy);
+                params.set("sort_order", state.sortOrder);
+                if (state.domainFilter.trim()) params.set("domain", state.domainFilter.trim());
 
                 const res = await fetch(`/api/links?${params.toString()}`);
                 if (!res.ok) throw new Error("Failed to fetch links");
@@ -83,7 +96,6 @@ export function useLinksQuery(): LinksQueryResult {
     }, [queryState, debouncedSearch, fetchLinks]);
 
     // --- State setters ---
-    // Changing filter/search always resets to page 1
     const setPage = useCallback((page: number) => {
         setQueryState((prev) => ({ ...prev, page }));
     }, []);
@@ -101,13 +113,27 @@ export function useLinksQuery(): LinksQueryResult {
     }, []);
 
     const setSearch = useCallback((search: string) => {
-        // Update the visible input value immediately (via queryState.search)
         setQueryState((prev) => ({ ...prev, search, page: 1 }));
-        // Debounce the actual server fetch trigger
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         searchDebounceRef.current = setTimeout(() => {
             setDebouncedSearch(search);
         }, 300);
+    }, []);
+
+    const setSortOrder = useCallback((sortOrder: SortOrder) => {
+        setQueryState((prev) => ({ ...prev, sortOrder, page: 1 }));
+    }, []);
+
+    const toggleSortOrder = useCallback(() => {
+        setQueryState((prev) => ({
+            ...prev,
+            sortOrder: prev.sortOrder === "desc" ? "asc" : "desc",
+            page: 1,
+        }));
+    }, []);
+
+    const setDomainFilter = useCallback((domainFilter: string) => {
+        setQueryState((prev) => ({ ...prev, domainFilter, page: 1 }));
     }, []);
 
     // --- Mutations ---
@@ -120,7 +146,6 @@ export function useLinksQuery(): LinksQueryResult {
                     body: JSON.stringify(newLink),
                 });
                 if (!res.ok) throw new Error("Failed to add link");
-                // Re-fetch current page to reflect the new link
                 await fetchLinks(queryState, debouncedSearch);
             } catch (err) {
                 console.error("Error adding link:", err);
@@ -131,7 +156,6 @@ export function useLinksQuery(): LinksQueryResult {
 
     const updateLink = useCallback(
         async (id: string, updates: Partial<LinkItem>) => {
-            // Optimistic update in-place
             const previousLinks = [...links];
             setLinks((prev) =>
                 prev.map((link) => (link.id === id ? { ...link, ...updates } : link))
@@ -183,6 +207,9 @@ export function useLinksQuery(): LinksQueryResult {
         setStatus,
         setIsFavorite,
         setSearch,
+        setSortOrder,
+        toggleSortOrder,
+        setDomainFilter,
         addLink,
         updateLink,
         bulkUpdateLinks,

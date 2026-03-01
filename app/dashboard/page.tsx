@@ -39,6 +39,8 @@ export default function Dashboard() {
     setStatus,
     setIsFavorite,
     setSearch,
+    toggleSortOrder,
+    setDomainFilter,
     addLink,
     updateLink,
     bulkUpdateLinks,
@@ -81,6 +83,8 @@ export default function Dashboard() {
             meta={{ onLinkUpdate: updateLink, onBulkUpdate: bulkUpdateLinks }}
             activeStatus={queryState.status}
             showFavoritesOnly={queryState.isFavorite}
+            sortOrder={queryState.sortOrder}
+            domainFilter={queryState.domainFilter}
             isLoading={isLoading}
             page={queryState.page}
             totalPages={totalPages}
@@ -90,6 +94,8 @@ export default function Dashboard() {
             onFavoriteToggle={setIsFavorite}
             onPageChange={setPage}
             onLimitChange={setLimit}
+            onToggleSortOrder={toggleSortOrder}
+            onDomainFilterChange={setDomainFilter}
             emptyStateMessage={emptyMessages[queryState.status]?.message || emptyMessages.all.message}
             emptyStateIcon={emptyMessages[queryState.status]?.icon || emptyMessages.all.icon}
           />

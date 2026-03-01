@@ -6,8 +6,19 @@ import {
     getCoreRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Inbox, Loader2, Star, Check, SkipForward, BookOpen, MoreHorizontal } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+    ChevronLeft,
+    ChevronRight,
+    Inbox,
+    Loader2,
+    Star,
+    Check,
+    SkipForward,
+    BookOpen,
+    MoreHorizontal,
+    X,
+} from "lucide-react";
 
 import {
     Table,
@@ -31,24 +42,21 @@ import {
     LinkStatus,
     PAGE_SIZE_OPTIONS,
     PageSizeOption,
+    SortOrder,
 } from "@/hooks/use-links";
-
-type StatusFilter = LinkStatus;
-
-const statusFilters: { value: StatusFilter; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "unread", label: "Unread" },
-    { value: "read", label: "Read" },
-    { value: "skipped", label: "Skipped" },
-];
 
 interface DataTableProps<TValue> {
     columns: ColumnDef<LinkItem, TValue>[];
     data: LinkItem[];
-    meta: DataTableMeta;
-    // Server-driven filter state (read-only for display)
-    activeStatus: StatusFilter;
+    meta: {
+        onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
+        onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
+    };
+    // Server-driven filter state
+    activeStatus: LinkStatus;
     showFavoritesOnly: boolean;
+    sortOrder: SortOrder;
+    domainFilter: string;
     isLoading: boolean;
     // Pagination
     page: number;
@@ -56,10 +64,12 @@ interface DataTableProps<TValue> {
     total: number;
     limit: PageSizeOption;
     // Callbacks
-    onStatusChange: (status: StatusFilter) => void;
+    onStatusChange: (status: LinkStatus) => void;
     onFavoriteToggle: (val: boolean) => void;
     onPageChange: (page: number) => void;
     onLimitChange: (limit: PageSizeOption) => void;
+    onToggleSortOrder: () => void;
+    onDomainFilterChange: (domain: string) => void;
     // Empty state
     emptyStateMessage?: string;
     emptyStateIcon?: React.ReactNode;
@@ -71,6 +81,8 @@ export function DataTable<TValue>({
     meta,
     activeStatus,
     showFavoritesOnly,
+    sortOrder,
+    domainFilter,
     isLoading,
     page,
     totalPages,
@@ -80,10 +92,30 @@ export function DataTable<TValue>({
     onFavoriteToggle,
     onPageChange,
     onLimitChange,
+    onToggleSortOrder,
+    onDomainFilterChange,
     emptyStateMessage = "No links found.",
     emptyStateIcon = <Inbox className="h-8 w-8 text-muted-foreground/50" />,
 }: DataTableProps<TValue>) {
     const [rowSelection, setRowSelection] = useState({});
+
+    // Collect unique domains from the current page for the filter popover.
+    // Note: this only shows domains visible in the current result set.
+    const availableDomains = useMemo(() => {
+        const domains = Array.from(new Set(data.map((d) => d.domain).filter(Boolean)));
+        return domains.sort();
+    }, [data]);
+
+    const tableMeta: DataTableMeta = {
+        ...meta,
+        sortOrder,
+        onToggleSortOrder,
+        domainFilter,
+        onDomainFilterChange,
+        availableDomains,
+        statusFilter: activeStatus,
+        onStatusFilterChange: onStatusChange,
+    };
 
     const table = useReactTable({
         data,
@@ -92,7 +124,7 @@ export function DataTable<TValue>({
         onRowSelectionChange: setRowSelection,
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.id,
-        meta: meta as any,
+        meta: tableMeta as unknown as Record<string, unknown>,
     });
 
     const selectedRows = Object.keys(rowSelection);
@@ -102,6 +134,12 @@ export function DataTable<TValue>({
         meta.onBulkUpdate(selectedRows, updates);
         setRowSelection({});
     };
+
+    // Count active filters for the badge
+    const activeFilterCount =
+        (activeStatus !== "all" ? 1 : 0) +
+        (showFavoritesOnly ? 1 : 0) +
+        (domainFilter ? 1 : 0);
 
     return (
         <div className="space-y-4">
@@ -167,25 +205,41 @@ export function DataTable<TValue>({
                 </div>
             )}
 
-            {/* Filter Toolbar */}
+            {/* Toolbar */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-muted/30 border border-border/40">
-                    {statusFilters.map((filter) => (
+                {/* Left: active filter chips */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {activeStatus !== "all" && (
                         <button
-                            key={filter.value}
-                            onClick={() => onStatusChange(filter.value)}
-                            className={cn(
-                                "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
-                                activeStatus === filter.value
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            )}
+                            onClick={() => onStatusChange("all")}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
                         >
-                            {filter.label}
+                            Status: {activeStatus}
+                            <X className="h-3 w-3" />
                         </button>
-                    ))}
+                    )}
+                    {domainFilter && (
+                        <button
+                            onClick={() => onDomainFilterChange("")}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                        >
+                            Source: {domainFilter}
+                            <X className="h-3 w-3" />
+                        </button>
+                    )}
+                    {showFavoritesOnly && (
+                        <button
+                            onClick={() => onFavoriteToggle(false)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+                        >
+                            <Star className="h-3 w-3 fill-current" />
+                            Favorites only
+                            <X className="h-3 w-3" />
+                        </button>
+                    )}
                 </div>
 
+                {/* Right: Favorites toggle + count */}
                 <div className="flex items-center gap-3">
                     <Button
                         variant="ghost"
