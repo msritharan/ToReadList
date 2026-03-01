@@ -16,7 +16,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-black overflow-hidden selection:bg-primary/30">
+        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background overflow-hidden selection:bg-primary/30">
             {/* Background Effects */}
             <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
                 {/* Radial gradient grid */}
@@ -51,7 +51,7 @@ export default function LandingPage() {
 
                 {/* Typography */}
                 <div className="space-y-8 mb-14 w-full flex flex-col items-center">
-                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/30 leading-[1.1] pb-2">
+                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-foreground leading-[1.1] pb-2">
                         Your Reading, <br className="hidden sm:inline" /> Organized.
                     </h1>
                     <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl text-center leading-relaxed font-light">
@@ -64,7 +64,7 @@ export default function LandingPage() {
                     <Button
                         onClick={handleGoogleLogin}
                         size="lg"
-                        className="h-16 px-10 rounded-full bg-white hover:bg-gray-100 text-black font-semibold shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_80px_rgba(255,255,255,0.2)] transition-all duration-500 gap-4 group text-xl hover:-translate-y-1"
+                        className="h-16 px-10 rounded-full bg-foreground hover:bg-foreground/90 text-background font-semibold shadow-[0_0_40px_rgba(0,0,0,0.1)] hover:shadow-[0_0_80px_rgba(0,0,0,0.15)] transition-all duration-500 gap-4 group text-xl hover:-translate-y-1"
                     >
                         <svg className="h-7 w-7 transition-transform group-hover:scale-110 duration-500" viewBox="0 0 24 24">
                             <path

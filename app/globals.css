@@ -49,84 +49,115 @@
 
 :root {
   --radius: 0.75rem;
-  /* Soft Sage Light Mode */
-  --background: #F4F7F4;
-  /* Very light tinted mint/sage, easy on eyes */
-  --foreground: #1A2E25;
-  /* Deep green-grey text */
-  --card: #FCFDFD;
-  /* Slightly off-white for contrast against the background */
-  --card-foreground: #1A2E25;
-  --popover: #FCFDFD;
-  --popover-foreground: #1A2E25;
-  --primary: #4ADE80;
-  /* Light mint green */
-  --primary-foreground: #022C22;
-  --secondary: #E4ECE5;
-  /* Soft sage for secondary elements */
-  --secondary-foreground: #15271F;
-  --muted: #E4ECE5;
-  --muted-foreground: #5B7566;
-  --accent: #E4ECE5;
-  --accent-foreground: #15271F;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
-  --border: #D1DED5;
-  /* Soft minty border */
-  --input: #D1DED5;
-  --ring: #4ADE80;
-  --chart-1: #4ADE80;
-  --chart-2: #0EA5E9;
-  --chart-3: #10B981;
-  --chart-4: #F59E0B;
-  --chart-5: #8B5CF6;
-  --sidebar: #E9F0EB;
-  --sidebar-foreground: #1A2E25;
-  --sidebar-primary: #4ADE80;
-  --sidebar-primary-foreground: #022C22;
-  --sidebar-accent: #D1DED5;
-  --sidebar-accent-foreground: #15271F;
-  --sidebar-border: #D1DED5;
-  --sidebar-ring: #4ADE80;
+  /* Light Mode - Warm & Easy on Eyes */
+  --background: #f3efe9;
+  /* Warm linen */
+  --foreground: #1c1917;
+  /* Near black */
+  --card: #faf8f5;
+  /* Slightly lighter linen */
+  --card-foreground: #1c1917;
+  --popover: #faf8f5;
+  --popover-foreground: #1c1917;
+
+  /* The 4 Accent Colors */
+  --primary: #3d9a6a;
+  /* Action */
+  --primary-foreground: #ffffff;
+  --destructive: #c44040;
+  /* Danger */
+  --destructive-foreground: #ffffff;
+
+  /* Neutral surfaces and borders */
+  --secondary: #e5e0d8;
+  --secondary-foreground: #1c1917;
+  --muted: #e5e0d8;
+  --muted-foreground: #78716c;
+  /* Warm gray */
+  --accent: #e5e0d8;
+  --accent-foreground: #1c1917;
+  --border: #ddd6cc;
+  /* Subtle warm divider */
+  --input: #ddd6cc;
+  --ring: #3d9a6a;
+
+  /* Charts */
+  --chart-1: #3d9a6a;
+  /* Action */
+  --chart-2: #4a82b0;
+  /* Info */
+  --chart-3: #c48d30;
+  /* Warm */
+  --chart-4: #c44040;
+  /* Danger */
+  --chart-5: #1c1917;
+  /* Neutral */
+
+  /* Sidebar */
+  --sidebar: #faf8f5;
+  --sidebar-foreground: #1c1917;
+  --sidebar-primary: #3d9a6a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e5e0d8;
+  --sidebar-accent-foreground: #1c1917;
+  --sidebar-border: #ddd6cc;
+  --sidebar-ring: #3d9a6a;
 }
 
 .dark {
-  /* Deep Forest / Night Slate Dark Mode */
-  --background: #0D1410;
-  /* Very deep tinted black/green */
-  --foreground: #F4F7F4;
-  --card: #141B17;
-  /* Slightly lighter deep forest for cards */
-  --card-foreground: #F4F7F4;
-  --popover: #141B17;
-  --popover-foreground: #F4F7F4;
-  --primary: #4ADE80;
-  /* Vibrant mint green for primary actions */
-  --primary-foreground: #022C22;
-  --secondary: #1F2E25;
-  --secondary-foreground: #F4F7F4;
-  --muted: #1A261E;
-  --muted-foreground: #94A89C;
-  --accent: #1F2E25;
-  --accent-foreground: #F4F7F4;
-  --destructive: #7F1D1D;
-  --destructive-foreground: #F4F7F4;
-  --border: #23342A;
-  --input: #23342A;
-  --ring: #4ADE80;
-  --chart-1: #4ADE80;
-  --chart-2: #38BDF8;
-  --chart-3: #34D399;
-  --chart-4: #FBBF24;
-  --chart-5: #A78BFA;
-  --sidebar: #0D1410;
-  --sidebar-foreground: #F4F7F4;
-  --sidebar-primary: #4ADE80;
-  --sidebar-primary-foreground: #022C22;
-  --sidebar-accent: #1F2E25;
-  --sidebar-accent-foreground: #F4F7F4;
-  --sidebar-border: #23342A;
-  --sidebar-ring: #4ADE80;
+  /* Dark Mode - Warm Charcoal */
+  --background: #1a1917;
+  /* Warm charcoal */
+  --foreground: #e7e2db;
+  /* Near white, warm undertone */
+  --card: #262422;
+  /* Slightly elevated charcoal */
+  --card-foreground: #e7e2db;
+  --popover: #262422;
+  --popover-foreground: #e7e2db;
+
+  /* The 4 Accent Colors */
+  --primary: #4db87d;
+  /* Action */
+  --primary-foreground: #000000;
+  --destructive: #e05555;
+  /* Danger */
+  --destructive-foreground: #ffffff;
+
+  /* Neutral surfaces and borders */
+  --secondary: #32302d;
+  --secondary-foreground: #e7e2db;
+  --muted: #32302d;
+  --muted-foreground: #948d83;
+  /* Warm gray */
+  --accent: #32302d;
+  --accent-foreground: #e7e2db;
+  --border: #3a3835;
+  /* Subtle warm divider */
+  --input: #3a3835;
+  --ring: #4db87d;
+
+  /* Charts */
+  --chart-1: #4db87d;
+  /* Action */
+  --chart-2: #5e98c8;
+  /* Info */
+  --chart-3: #daa040;
+  /* Warm */
+  --chart-4: #e05555;
+  /* Danger */
+  --chart-5: #e7e2db;
+  /* Neutral */
+
+  /* Sidebar */
+  --sidebar: #1a1917;
+  --sidebar-foreground: #e7e2db;
+  --sidebar-primary: #4db87d;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #32302d;
+  --sidebar-accent-foreground: #e7e2db;
+  --sidebar-border: #3a3835;
+  --sidebar-ring: #4db87d;
 }
 
 @layer base {

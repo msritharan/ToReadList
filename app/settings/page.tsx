@@ -206,7 +206,7 @@ export default function Settings() {
                                         <p className="text-xs text-muted-foreground">Download a copy of all your saved links.</p>
                                     </div>
                                 </div>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border shrink-0">
                                     <Clock className="h-3 w-3" />
                                     Coming Soon
                                 </span>
@@ -220,7 +220,7 @@ export default function Settings() {
                                         <p className="text-xs text-muted-foreground">Permanently remove your account and all data.</p>
                                     </div>
                                 </div>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border shrink-0">
                                     <Clock className="h-3 w-3" />
                                     Coming Soon
                                 </span>

@@ -35,7 +35,7 @@ export function useLinksQuery(): LinksQueryResult {
     const [queryState, setQueryState] = useState<LinksQueryState>({
         page: 1,
         limit: 25,
-        status: "all",
+        status: "unread",
         isFavorite: false,
         search: "",
     });

@@ -189,7 +189,7 @@ export function AddLinkDialog({ onAddLink, trigger }: AddLinkDialogProps) {
                     <Button
                         onClick={handleSubmit}
                         disabled={!urlValid}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
                     >
                         Save Link
                     </Button>
