@@ -37,7 +37,8 @@ export async function middleware(request: NextRequest) {
     // If user is not signed in and the route is not / or /auth/callback, redirect to /
     const isAuthRoute =
         request.nextUrl.pathname === "/" ||
-        request.nextUrl.pathname.startsWith("/auth/callback");
+        request.nextUrl.pathname.startsWith("/auth/callback") ||
+        request.nextUrl.pathname.startsWith("/api/telegram/webhook");
 
     if (!user && !isAuthRoute) {
         const url = request.nextUrl.clone();

@@ -25,20 +25,20 @@ export default function LandingPage() {
                 {/* Ambient glow */}
                 <div className="absolute w-[800px] h-[800px] bg-primary/10 blur-[150px] rounded-full mix-blend-screen opacity-50 animate-in fade-in duration-1000 transition-colors" />
 
-                {/* Subtle WhatsApp green glow hint */}
-                <div className="absolute w-[400px] h-[400px] bg-emerald-500/5 blur-[100px] rounded-full translate-y-32 translate-x-32" />
+                {/* Subtle Telegram blue glow hint */}
+                <div className="absolute w-[400px] h-[400px] bg-sky-500/5 blur-[100px] rounded-full translate-y-32 translate-x-32" />
             </div>
 
             {/* Main Content */}
             <main className="relative z-10 w-full max-w-5xl px-6 py-12 lg:px-8 flex flex-col items-center justify-center text-center mx-auto my-auto animate-in slide-in-from-bottom-8 fade-in duration-1000 ease-out fill-mode-both">
 
                 {/* Top Badge */}
-                <div className="mb-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-sm font-medium tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                <div className="mb-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-400 text-sm font-medium tracking-wide shadow-[0_0_15px_rgba(14,165,233,0.1)]">
                     <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
                     </span>
-                    Designed for WhatsApp
+                    Designed for Telegram
                 </div>
 
                 {/* Hero Icon */}
@@ -55,7 +55,7 @@ export default function LandingPage() {
                         Your Reading, <br className="hidden sm:inline" /> Organized.
                     </h1>
                     <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl text-center leading-relaxed font-light">
-                        Forward links from WhatsApp, read them later in a beautifully minimal space. No clutter, just focus.
+                        Send links via Telegram, read them later in a beautifully minimal space. No clutter, just focus.
                     </p>
                 </div>
 

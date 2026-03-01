@@ -1,6 +1,6 @@
 # ToReadList
 
-> A personal read-later system: save any link from WhatsApp (or anywhere), auto-extract metadata, and manage your reading queue through a clean web UI.
+> A personal read-later system: save any link from Telegram (or anywhere), auto-extract metadata, and manage your reading queue through a clean web UI.
 
 ## Getting Started
 
@@ -39,54 +39,50 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 ---
 
-## Upcoming: Onboarding Flow & WhatsApp Verification
+## Upcoming: Onboarding Flow & Telegram Verification
 
 ### Overview
 
-A guided onboarding for new users to connect ingestion channels. WhatsApp is the first channel, with more planned (Email, Telegram, Browser Extension).
+A guided onboarding for new users to connect ingestion channels. Telegram is the first channel, with more planned (Email, Browser Extension).
 
 ### Verification Flow (Zero Cost)
 
-Uses **reverse verification** — the user sends a code TO the bot (a free service message) instead of the bot sending an OTP (which costs money).
+Uses a simple `/start` flow — the user messages the bot and their Telegram chat ID is automatically linked to their account.
 
 ```
-1. User enters phone number in the web app
-2. App generates a unique 6-character code and displays it
-3. User sends the code to the WhatsApp bot number
-4. Bot matches the code to the user's account
-5. Bot replies "✅ Verified!" (free service message)
-6. Web app detects verification and redirects to dashboard
+1. User navigates to Settings → Channels → Connect Telegram
+2. App shows the bot username and a deep link (t.me/YourBot?start=<token>)
+3. User taps the link → opens Telegram → sends /start
+4. Bot receives the chat ID + start token, links to user's account
+5. Bot replies "✅ Connected!" (free)
+6. Web app detects connection and updates the UI
 ```
 
 ### Required Changes
 
 #### Database Migration
 Add to `profiles` table:
-- `whatsapp_verified` (boolean, default false)
-- `verification_code` (text, nullable)
-- `verification_expires_at` (timestamptz, nullable)
+- `telegram_verified` (boolean, default false)
+- `telegram_link_token` (text, nullable)
+- `telegram_link_expires_at` (timestamptz, nullable)
 
 #### New API Routes
 | Route | Purpose |
 |-------|---------|
-| `POST /api/verify/start` | Generate verification code, store on profile |
+| `POST /api/verify/start` | Generate link token, store on profile |
 | `POST /api/verify/check` | Poll verification status |
-| `GET /api/whatsapp/webhook` | Meta webhook challenge response |
-| `POST /api/whatsapp/webhook` | Receive messages, verify codes, handle links |
+| `POST /api/telegram/webhook` | Receive messages, verify tokens, handle links |
 
 #### New Pages
-- `/onboarding` — Step-by-step wizard (Welcome → Phone → Verify → Done)
+- `/onboarding` — Step-by-step wizard (Welcome → Connect Telegram → Done)
 - Skip option available at every step
 
 #### New Environment Variables
 ```
-WHATSAPP_VERIFY_TOKEN=your-webhook-verify-token
-WHATSAPP_ACCESS_TOKEN=your-meta-access-token
-WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
-WHATSAPP_BOT_NUMBER=+1234567890
+TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
+TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
 ```
 
 ### Prerequisites
-- Meta Business Account with WhatsApp Cloud API access
-- A dedicated phone number for the bot
-- Webhook URL configured in Meta Developer Console
+- A Telegram bot created via @BotFather (free, instant)
+- Webhook URL configured via Telegram Bot API
