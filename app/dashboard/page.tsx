@@ -8,6 +8,25 @@ import { columns } from "@/components/links-table/columns";
 import { AddLinkDialog } from "@/components/add-link-dialog";
 import { useLinksQuery } from "@/hooks/use-links";
 
+const emptyMessages: Record<string, { message: string; icon: React.ReactNode }> = {
+  all: {
+    message: "Your reading list is empty. Start building your knowledge empire!",
+    icon: <BookOpen className="h-8 w-8 text-muted-foreground/50" />,
+  },
+  unread: {
+    message: "All caught up! No unread articles waiting for you.",
+    icon: <BookOpen className="h-8 w-8 text-muted-foreground/50" />,
+  },
+  skipped: {
+    message: "Nothing in the skip zone. Every link gets a fair shot!",
+    icon: <BookOpen className="h-8 w-8 text-muted-foreground/50" />,
+  },
+  read: {
+    message: "No read articles yet. Time to start reading!",
+    icon: <BookOpen className="h-8 w-8 text-muted-foreground/50" />,
+  },
+};
+
 export default function Dashboard() {
   const {
     links,
@@ -71,8 +90,8 @@ export default function Dashboard() {
             onFavoriteToggle={setIsFavorite}
             onPageChange={setPage}
             onLimitChange={setLimit}
-            emptyStateMessage="No links found. Try a different filter or add your first link!"
-            emptyStateIcon={<BookOpen className="h-8 w-8 text-muted-foreground/50" />}
+            emptyStateMessage={emptyMessages[queryState.status]?.message || emptyMessages.all.message}
+            emptyStateIcon={emptyMessages[queryState.status]?.icon || emptyMessages.all.icon}
           />
         </div>
       </main>
