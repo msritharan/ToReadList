@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Mail, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { H3, Large, Small, Muted } from "@/components/ui/typography";
 
 interface UserProfile {
     name: string;
@@ -71,7 +72,7 @@ export default function Profile() {
                             )}
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-lg font-semibold truncate">{user?.name || "User"}</h2>
+                            <Large className="truncate">{user?.name || "User"}</Large>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
                                 <span className="inline-flex items-center gap-1.5">
                                     <Mail className="h-3.5 w-3.5" />
@@ -96,19 +97,19 @@ export default function Profile() {
                             <Card className="border-border/40 bg-card/50">
                                 <CardContent className="p-5">
                                     <p className="text-2xl font-bold text-primary">{stats.total}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Links Saved</p>
+                                    <Small className="mt-1 text-muted-foreground">Links Saved</Small>
                                 </CardContent>
                             </Card>
                             <Card className="border-border/40 bg-card/50">
                                 <CardContent className="p-5">
                                     <p className="text-2xl font-bold text-green-500">{stats.read}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Articles Read</p>
+                                    <Small className="mt-1 text-muted-foreground">Articles Read</Small>
                                 </CardContent>
                             </Card>
                             <Card className="border-border/40 bg-card/50">
                                 <CardContent className="p-5">
                                     <p className="text-2xl font-bold text-blue-500">{percentRead}%</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Completion</p>
+                                    <Small className="mt-1 text-muted-foreground">Completion</Small>
                                 </CardContent>
                             </Card>
                         </div>

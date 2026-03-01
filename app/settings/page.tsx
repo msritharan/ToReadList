@@ -5,6 +5,7 @@ import { Send, Clock, Download, Trash2, Loader2, ExternalLink, CheckCircle2, Unp
 import { Separator } from "@/components/ui/separator";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
+import { H3, P, Small } from "@/components/ui/typography";
 
 type TelegramStatus = "loading" | "disconnected" | "connecting" | "connected";
 
@@ -84,9 +85,9 @@ export default function Settings() {
 
                     {/* ── Ingestion Channels ── */}
                     <section>
-                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                        <H3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
                             Ingestion Channels
-                        </h2>
+                        </H3>
                         <div className="space-y-1">
                             {/* Telegram Channel */}
                             <div className="rounded-lg px-4 py-3.5 transition-colors hover:bg-muted/40">
@@ -95,10 +96,10 @@ export default function Settings() {
                                         <Send className="h-[18px] w-[18px] text-blue-400" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium">Telegram</p>
-                                        <p className="text-xs text-muted-foreground">
+                                        <P className="text-sm font-medium mt-0">Telegram</P>
+                                        <Small className="text-muted-foreground">
                                             Send links to our Telegram bot to add them to your list.
-                                        </p>
+                                        </Small>
                                     </div>
 
                                     {/* Status / Action */}
@@ -151,9 +152,9 @@ export default function Settings() {
                                 {telegramStatus === "connecting" && deepLink && (
                                     <div className="mt-3 ml-13 pl-[52px]">
                                         <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-3 space-y-2">
-                                            <p className="text-xs text-muted-foreground">
+                                            <Small className="text-muted-foreground">
                                                 Tap the link below to open Telegram and connect your account:
-                                            </p>
+                                            </Small>
                                             <a
                                                 href={deepLink}
                                                 target="_blank"
@@ -178,13 +179,13 @@ export default function Settings() {
 
                     {/* ── Preferences ── */}
                     <section>
-                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                        <H3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
                             Preferences
-                        </h2>
+                        </H3>
                         <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
                             <div>
-                                <p className="text-sm font-medium">Theme</p>
-                                <p className="text-xs text-muted-foreground">Choose your preferred color scheme.</p>
+                                <P className="text-sm font-medium mt-0">Theme</P>
+                                <Small className="text-muted-foreground">Choose your preferred color scheme.</Small>
                             </div>
                             <ThemeSelector />
                         </div>
@@ -194,16 +195,16 @@ export default function Settings() {
 
                     {/* ── Account ── */}
                     <section>
-                        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                        <H3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
                             Account
-                        </h2>
+                        </H3>
                         <div className="space-y-1">
                             <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <Download className="h-4 w-4 text-muted-foreground" />
                                     <div>
-                                        <p className="text-sm font-medium">Export Data</p>
-                                        <p className="text-xs text-muted-foreground">Download a copy of all your saved links.</p>
+                                        <P className="text-sm font-medium mt-0">Export Data</P>
+                                        <Small className="text-muted-foreground">Download a copy of all your saved links.</Small>
                                     </div>
                                 </div>
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border shrink-0">
@@ -216,8 +217,8 @@ export default function Settings() {
                                 <div className="flex items-center gap-3">
                                     <Trash2 className="h-4 w-4 text-destructive/70" />
                                     <div>
-                                        <p className="text-sm font-medium text-destructive">Delete Account</p>
-                                        <p className="text-xs text-muted-foreground">Permanently remove your account and all data.</p>
+                                        <P className="text-sm font-medium text-destructive mt-0">Delete Account</P>
+                                        <Small className="text-muted-foreground">Permanently remove your account and all data.</Small>
                                     </div>
                                 </div>
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border shrink-0">

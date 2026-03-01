@@ -7,6 +7,7 @@ import { DataTable } from "@/components/links-table/data-table";
 import { columns } from "@/components/links-table/columns";
 import { AddLinkDialog } from "@/components/add-link-dialog";
 import { useLinksQuery } from "@/hooks/use-links";
+import { H1 } from "@/components/ui/typography";
 
 const emptyMessages: Record<string, { message: string; icon: React.ReactNode }> = {
   all: {
@@ -76,7 +77,7 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Collection</h1>
+          <H1 className="text-2xl font-semibold tracking-tight">Collection</H1>
 
           <DataTable
             columns={columns}

@@ -3,6 +3,7 @@
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { H1, Lead } from "@/components/ui/typography";
 
 export default function LandingPage() {
     const handleGoogleLogin = async () => {
@@ -51,12 +52,12 @@ export default function LandingPage() {
 
                 {/* Typography */}
                 <div className="space-y-8 mb-14 w-full flex flex-col items-center">
-                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-foreground leading-[1.1] pb-2">
+                    <H1 className="text-5xl sm:text-7xl lg:text-8xl pb-2 text-center text-foreground font-black tracking-tighter leading-[1.1]">
                         Your Reading, <br className="hidden sm:inline" /> Organized.
-                    </h1>
-                    <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl text-center leading-relaxed font-light">
+                    </H1>
+                    <Lead className="text-xl sm:text-2xl max-w-2xl text-center leading-relaxed font-light">
                         Send links via Telegram, read them later in a beautifully minimal space. No clutter, just focus.
-                    </p>
+                    </Lead>
                 </div>
 
                 {/* Action Area */}
