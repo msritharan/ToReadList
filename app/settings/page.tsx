@@ -2,7 +2,7 @@
 
 import { MessageSquare, Send, Clock, Download, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { ThemeSelector } from "@/components/theme-selector";
 
 const channels = [
     {
@@ -66,11 +66,9 @@ export default function Settings() {
                         <div className="flex items-center justify-between rounded-lg px-4 py-3.5 hover:bg-muted/40 transition-colors">
                             <div>
                                 <p className="text-sm font-medium">Theme</p>
-                                <p className="text-xs text-muted-foreground">Dark aesthetic optimized for reading comfort.</p>
+                                <p className="text-xs text-muted-foreground">Choose your preferred color scheme.</p>
                             </div>
-                            <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">
-                                Dark Mode
-                            </span>
+                            <ThemeSelector />
                         </div>
                     </section>
 

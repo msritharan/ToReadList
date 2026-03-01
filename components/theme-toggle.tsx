@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
-    // Avoid hydration mismatch — only render the icon after mount
     useEffect(() => setMounted(true), []);
 
     if (!mounted) {
@@ -20,7 +19,7 @@ export function ThemeToggle() {
         );
     }
 
-    const isDark = theme === "dark";
+    const isDark = resolvedTheme === "dark";
 
     return (
         <Button
