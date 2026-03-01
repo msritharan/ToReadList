@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface UserInfo {
     name: string;
@@ -53,56 +54,59 @@ export function TopNavbar() {
                 <span className="font-semibold text-lg tracking-tight">ToReadList</span>
             </Link>
 
-            {/* Right: User Avatar Dropdown */}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-primary/20 transition-all">
-                        {user?.avatar_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                                src={user.avatar_url}
-                                alt=""
-                                className="w-9 h-9 rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
-                                {user?.name?.charAt(0).toUpperCase() || "U"}
-                            </div>
+            {/* Right: Theme Toggle + User Avatar Dropdown */}
+            <div className="flex items-center gap-1">
+                <ThemeToggle />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-primary/20 transition-all">
+                            {user?.avatar_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={user.avatar_url}
+                                    alt=""
+                                    className="w-9 h-9 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
+                                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                                </div>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 bg-popover">
+                        {user && (
+                            <>
+                                <div className="px-3 py-2">
+                                    <p className="text-sm font-medium">{user.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                </div>
+                                <DropdownMenuSeparator />
+                            </>
                         )}
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover">
-                    {user && (
-                        <>
-                            <div className="px-3 py-2">
-                                <p className="text-sm font-medium">{user.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                            </div>
-                            <DropdownMenuSeparator />
-                        </>
-                    )}
-                    <DropdownMenuItem className="cursor-pointer" asChild>
-                        <Link href="/profile">
-                            <User className="mr-2 h-4 w-4" />
-                            Profile
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" asChild>
-                        <Link href="/settings">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Settings
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                        onClick={handleSignOut}
-                    >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign Out
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        <DropdownMenuItem className="cursor-pointer" asChild>
+                            <Link href="/profile">
+                                <User className="mr-2 h-4 w-4" />
+                                Profile
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" asChild>
+                            <Link href="/settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onClick={handleSignOut}
+                        >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sign Out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </header>
     );
 }
