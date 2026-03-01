@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, Settings, LogOut, User } from "lucide-react";
+import { BookOpen, Settings, LogOut, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -14,6 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTrash } from "@/hooks/use-trash";
 
 interface UserInfo {
     name: string;
@@ -24,6 +25,7 @@ interface UserInfo {
 export function TopNavbar() {
     const router = useRouter();
     const [user, setUser] = useState<UserInfo | null>(null);
+    const { trashCount } = useTrash();
 
     useEffect(() => {
         const supabase = createClient();
@@ -94,6 +96,17 @@ export function TopNavbar() {
                             <Link href="/settings">
                                 <Settings className="mr-2 h-4 w-4" />
                                 Settings
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" asChild>
+                            <Link href="/trash">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Trash
+                                {trashCount > 0 && (
+                                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                                        {trashCount > 99 ? "99+" : trashCount}
+                                    </span>
+                                )}
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />

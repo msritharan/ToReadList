@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
     let baseQuery = supabase
         .from("links")
         .select("*", { count: "exact" })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
 
     if (status && status !== "all") {
         baseQuery = baseQuery.eq("status", status);

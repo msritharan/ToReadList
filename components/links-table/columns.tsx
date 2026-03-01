@@ -15,6 +15,7 @@ import {
     ListFilter,
     X,
     Search,
+    Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,11 @@ import { cn } from "@/lib/utils";
 export interface DataTableMeta {
     onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
     onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
+    onDeleteLink?: (id: string) => void;
+    // Trash specific
+    isTrashView?: boolean;
+    onRestoreLink?: (id: string) => void;
+    onDeleteForever?: (id: string) => void;
     // Sort
     sortOrder: SortOrder;
     onToggleSortOrder: () => void;
@@ -354,53 +360,85 @@ export const columns: ColumnDef<LinkItem>[] = [
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[180px] bg-popover">
-                            {link.status !== "read" && (
-                                <DropdownMenuItem
-                                    className="cursor-pointer"
-                                    onClick={() => meta.onLinkUpdate(link.id, { status: "read" })}
-                                >
-                                    <Check className="mr-2 h-4 w-4 text-emerald-500" />
-                                    Mark as Read
-                                </DropdownMenuItem>
-                            )}
-                            {link.status === "read" && (
-                                <DropdownMenuItem
-                                    className="cursor-pointer"
-                                    onClick={() => meta.onLinkUpdate(link.id, { status: "unread" })}
-                                >
-                                    <BookOpen className="mr-2 h-4 w-4 text-blue-500" />
-                                    Mark as Unread
-                                </DropdownMenuItem>
-                            )}
+                            {meta.isTrashView ? (
+                                <>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer"
+                                        onClick={() => meta.onRestoreLink?.(link.id)}
+                                    >
+                                        <Undo2 className="mr-2 h-4 w-4" />
+                                        Restore
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        onClick={() => meta.onDeleteForever?.(link.id)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Forever
+                                    </DropdownMenuItem>
+                                </>
+                            ) : (
+                                <>
+                                    {link.status !== "read" && (
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onClick={() => meta.onLinkUpdate(link.id, { status: "read" })}
+                                        >
+                                            <Check className="mr-2 h-4 w-4 text-emerald-500" />
+                                            Mark as Read
+                                        </DropdownMenuItem>
+                                    )}
+                                    {link.status === "read" && (
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onClick={() => meta.onLinkUpdate(link.id, { status: "unread" })}
+                                        >
+                                            <BookOpen className="mr-2 h-4 w-4 text-blue-500" />
+                                            Mark as Unread
+                                        </DropdownMenuItem>
+                                    )}
 
-                            {link.status !== "skipped" && (
-                                <DropdownMenuItem
-                                    className="cursor-pointer"
-                                    onClick={() => meta.onLinkUpdate(link.id, { status: "skipped" })}
-                                >
-                                    <SkipForward className="mr-2 h-4 w-4 text-orange-500" />
-                                    Skip
-                                </DropdownMenuItem>
-                            )}
-                            {link.status === "skipped" && (
-                                <DropdownMenuItem
-                                    className="cursor-pointer"
-                                    onClick={() => meta.onLinkUpdate(link.id, { status: "unread" })}
-                                >
-                                    <Undo2 className="mr-2 h-4 w-4 text-blue-500" />
-                                    Move to Unread
-                                </DropdownMenuItem>
-                            )}
+                                    {link.status !== "skipped" && (
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onClick={() => meta.onLinkUpdate(link.id, { status: "skipped" })}
+                                        >
+                                            <SkipForward className="mr-2 h-4 w-4 text-orange-500" />
+                                            Skip
+                                        </DropdownMenuItem>
+                                    )}
+                                    {link.status === "skipped" && (
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onClick={() => meta.onLinkUpdate(link.id, { status: "unread" })}
+                                        >
+                                            <Undo2 className="mr-2 h-4 w-4 text-blue-500" />
+                                            Move to Unread
+                                        </DropdownMenuItem>
+                                    )}
 
-                            <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator />
 
-                            <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => meta.onLinkUpdate(link.id, { is_favorite: !link.is_favorite })}
-                            >
-                                <Star className="mr-2 h-4 w-4 text-yellow-500" fill={link.is_favorite ? "currentColor" : "none"} />
-                                {link.is_favorite ? "Unfavorite" : "Favorite"}
-                            </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer"
+                                        onClick={() => meta.onLinkUpdate(link.id, { is_favorite: !link.is_favorite })}
+                                    >
+                                        <Star className="mr-2 h-4 w-4 text-yellow-500" fill={link.is_favorite ? "currentColor" : "none"} />
+                                        {link.is_favorite ? "Unfavorite" : "Favorite"}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        onClick={() => meta.onDeleteLink?.(link.id)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Move to Trash
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

@@ -36,6 +36,7 @@ export interface LinksQueryResult {
     addLink: (link: Omit<LinkItem, "id" | "created_at">) => Promise<void>;
     updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
     bulkUpdateLinks: (ids: string[], updates: Partial<LinkItem>) => Promise<void>;
+    deleteLink: (id: string) => Promise<void>;
 }
 
 export function useLinksQuery(): LinksQueryResult {
@@ -196,6 +197,27 @@ export function useLinksQuery(): LinksQueryResult {
         [links]
     );
 
+    const deleteLink = useCallback(
+        async (id: string) => {
+            // Optimistically remove from list
+            setLinks((prev) => prev.filter((link) => link.id !== id));
+            setTotal((prev) => Math.max(0, prev - 1));
+            try {
+                const res = await fetch(`/api/links/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ deleted_at: new Date().toISOString() }),
+                });
+                if (!res.ok) throw new Error("Failed to delete link");
+            } catch (err) {
+                console.error("Error deleting link:", err);
+                // Re-fetch to restore correct state
+                await fetchLinks(queryState, debouncedSearch);
+            }
+        },
+        [queryState, debouncedSearch, fetchLinks]
+    );
+
     return {
         links,
         total,
@@ -213,5 +235,6 @@ export function useLinksQuery(): LinksQueryResult {
         addLink,
         updateLink,
         bulkUpdateLinks,
+        deleteLink,
     };
 }
