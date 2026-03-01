@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { LogOut, Mail, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useLinks } from "@/hooks/use-links";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+
 
 interface UserProfile {
     name: string;
@@ -15,8 +15,15 @@ interface UserProfile {
     created_at: string;
 }
 
+interface LinkStats {
+    total: number;
+    read: number;
+    unread: number;
+    skipped: number;
+}
+
 export default function Profile() {
-    const { links, isLoaded } = useLinks();
+    const [stats, setStats] = useState<LinkStats>({ total: 0, read: 0, unread: 0, skipped: 0 });
     const [user, setUser] = useState<UserProfile | null>(null);
     const router = useRouter();
 
@@ -32,6 +39,11 @@ export default function Profile() {
                 });
             }
         });
+
+        fetch("/api/links/stats")
+            .then((res) => res.json())
+            .then((data: LinkStats) => setStats(data))
+            .catch(console.error);
     }, []);
 
     const handleSignOut = async () => {
@@ -40,11 +52,8 @@ export default function Profile() {
         router.push("/login");
     };
 
-    if (!isLoaded) return <div className="p-8">Loading...</div>;
-
-    const totalLinks = links.length;
-    const readLinksCount = links.filter((l) => l.status === "read").length;
-    const percentRead = totalLinks === 0 ? 0 : Math.round((readLinksCount / totalLinks) * 100);
+    const percentRead =
+        stats.total === 0 ? 0 : Math.round((stats.read / stats.total) * 100);
 
     const joinDate = user?.created_at
         ? new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
@@ -100,14 +109,14 @@ export default function Profile() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Card className="border-border/40 bg-card/50">
                                 <CardContent className="p-6">
-                                    <p className="text-3xl font-bold text-primary">{totalLinks}</p>
+                                    <p className="text-3xl font-bold text-primary">{stats.total}</p>
                                     <p className="text-sm text-muted-foreground font-medium mt-1">Total Links Saved</p>
                                 </CardContent>
                             </Card>
 
                             <Card className="border-border/40 bg-card/50">
                                 <CardContent className="p-6">
-                                    <p className="text-3xl font-bold text-green-500">{readLinksCount}</p>
+                                    <p className="text-3xl font-bold text-green-500">{stats.read}</p>
                                     <p className="text-sm text-muted-foreground font-medium mt-1">Articles Read</p>
                                 </CardContent>
                             </Card>

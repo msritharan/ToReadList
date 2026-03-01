@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { BookOpen, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/links-table/data-table";
 import { columns } from "@/components/links-table/columns";
 import { AddLinkDialog } from "@/components/add-link-dialog";
-import { useLinks } from "@/hooks/use-links";
+import { useLinksQuery } from "@/hooks/use-links";
 
 export default function Dashboard() {
-  const { links, addLink, updateLink, deleteLink, isLoaded } = useLinks();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  if (!isLoaded) return <div className="p-8">Loading...</div>;
+  const {
+    links,
+    total,
+    totalPages,
+    isLoading,
+    queryState,
+    setPage,
+    setLimit,
+    setStatus,
+    setIsFavorite,
+    setSearch,
+    addLink,
+    updateLink,
+    deleteLink,
+  } = useLinksQuery();
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -23,8 +33,8 @@ export default function Dashboard() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search articles..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={queryState.search}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary/50 text-foreground"
           />
         </div>
@@ -50,8 +60,18 @@ export default function Dashboard() {
             columns={columns}
             data={links}
             meta={{ onLinkUpdate: updateLink, onLinkDelete: deleteLink }}
-            searchQuery={searchQuery}
-            emptyStateMessage="No links yet. Add your first link to get started!"
+            activeStatus={queryState.status}
+            showFavoritesOnly={queryState.isFavorite}
+            isLoading={isLoading}
+            page={queryState.page}
+            totalPages={totalPages}
+            total={total}
+            limit={queryState.limit}
+            onStatusChange={setStatus}
+            onFavoriteToggle={setIsFavorite}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+            emptyStateMessage="No links found. Try a different filter or add your first link!"
             emptyStateIcon={<BookOpen className="h-8 w-8 text-muted-foreground/50" />}
           />
         </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// GET /api/links — fetch links for the authenticated user
+// GET /api/links — fetch paginated links for the authenticated user
 export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const {
@@ -16,32 +16,51 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const is_favorite = searchParams.get("is_favorite");
     const search = searchParams.get("search");
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(
+        200,
+        Math.max(1, parseInt(searchParams.get("limit") ?? "25", 10))
+    );
+    const offset = (page - 1) * limit;
 
-    let query = supabase
+    // Build the filtered query (shared between count and data fetch)
+    let baseQuery = supabase
         .from("links")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
 
-    if (status) {
-        query = query.eq("status", status);
+    if (status && status !== "all") {
+        baseQuery = baseQuery.eq("status", status);
     }
 
     if (is_favorite === "true") {
-        query = query.eq("is_favorite", true);
+        baseQuery = baseQuery.eq("is_favorite", true);
     }
 
-    if (search) {
-        query = query.or(`title.ilike.%${search}%,url.ilike.%${search}%,domain.ilike.%${search}%`);
+    if (search && search.trim()) {
+        baseQuery = baseQuery.or(
+            `title.ilike.%${search}%,url.ilike.%${search}%,domain.ilike.%${search}%`
+        );
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await baseQuery
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    const total = count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return NextResponse.json({
+        data: data ?? [],
+        total,
+        page,
+        limit,
+        totalPages,
+    });
 }
 
 // POST /api/links — create a new link
