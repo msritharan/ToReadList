@@ -7,6 +7,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { useState, useMemo, Fragment } from "react";
+import { formatDistanceToNow } from "date-fns";
 import {
     ChevronLeft,
     ChevronRight,
@@ -454,46 +455,38 @@ export function DataTable<TValue>({
                                         )}
                                     </div>
                                 </div>
-                                {/* Description row */}
+                                {/* Description row - compact single line */}
                                 <div className="pl-7">
-                                    {row.getVisibleCells().map(cell =>
-                                        cell.column.id === 'description' ? (
-                                            <Fragment key={cell.id}>
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </Fragment>
-                                        ) : null
-                                    )}
+                                    {(() => {
+                                        const link = row.original;
+                                        if (!link.description) return null;
+                                        const displayText = link.description.length > 100 
+                                            ? link.description.slice(0, 100) + "..." 
+                                            : link.description;
+                                        return (
+                                            <p className="text-sm text-muted-foreground line-clamp-1">
+                                                {displayText}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
-                                {/* Middle row: domain and date */}
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-7 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                {/* Bottom row: domain · date · status - all inline */}
+                                <div className="flex items-center gap-2 pl-7 text-xs text-muted-foreground flex-wrap">
+                                    <span className="truncate">{row.original.domain}</span>
+                                    <span>·</span>
+                                    <span className="whitespace-nowrap tabular-nums">
+                                        {formatDistanceToNow(new Date(row.original.created_at), { addSuffix: true })}
+                                    </span>
+                                    <span>·</span>
+                                    <span>
                                         {row.getVisibleCells().map(cell =>
-                                            cell.column.id === 'domain' ? (
+                                            cell.column.id === 'status' ? (
                                                 <Fragment key={cell.id}>
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </Fragment>
                                             ) : null
                                         )}
-                                    </div>
-                                    <div className="whitespace-nowrap tabular-nums">
-                                        {row.getVisibleCells().map(cell =>
-                                            cell.column.id === 'created_at' ? (
-                                                <Fragment key={cell.id}>
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </Fragment>
-                                            ) : null
-                                        )}
-                                    </div>
-                                </div>
-                                {/* Bottom row: status */}
-                                <div className="flex justify-start pl-7 mt-1 text-sm font-medium">
-                                    {row.getVisibleCells().map(cell =>
-                                        cell.column.id === 'status' ? (
-                                            <Fragment key={cell.id}>
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </Fragment>
-                                        ) : null
-                                    )}
+                                    </span>
                                 </div>
                             </div>
                         ))

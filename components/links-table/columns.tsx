@@ -290,19 +290,31 @@ function StatusFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
 
 // ─── Description Cell Component ───────────────────────────────────────────────
 
-function DescriptionCell({ description }: { description: string }) {
+type DescriptionCellProps = {
+    description: string;
+    variant?: "desktop" | "mobile";
+};
+
+function DescriptionCell({ description, variant = "desktop" }: DescriptionCellProps) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const shouldTruncate = description.length > 150;
+    const shouldTruncateDesktop = description.length > 150;
+    const shouldTruncateMobile = description.length > 100;
+    
+    const shouldTruncate = variant === "mobile" ? shouldTruncateMobile : shouldTruncateDesktop;
+    const truncateLength = variant === "mobile" ? 100 : 150;
+    
     const displayText = isExpanded || !shouldTruncate
         ? description
-        : description.slice(0, 150) + "...";
+        : description.slice(0, truncateLength) + "...";
+
+    const isCompact = variant === "mobile";
 
     return (
-        <div className="pl-9 mt-0.5 max-w-md">
-            <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded ? "whitespace-normal break-words" : "line-clamp-2"}`}>
+        <div className={isCompact ? "" : "pl-9 mt-0.5 max-w-md"}>
+            <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded || isCompact ? "whitespace-normal break-words line-clamp-2" : "line-clamp-2"}`}>
                 {displayText}
             </p>
-            {shouldTruncate && (
+            {!isCompact && shouldTruncateDesktop && (
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="text-xs text-primary hover:text-primary/80 font-medium mt-1 flex items-center gap-1 transition-colors"
