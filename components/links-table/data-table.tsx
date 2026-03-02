@@ -292,7 +292,7 @@ export function DataTable<TValue>({
                             <X className="h-3 w-3" />
                         </button>
                     )}
-                    {showFavoritesOnly && (
+                    {(!isTrash && showFavoritesOnly) && (
                         <button
                             onClick={() => onFavoriteToggle(false)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
@@ -388,20 +388,22 @@ export function DataTable<TValue>({
                         </DialogContent>
                     </Dialog>
 
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onFavoriteToggle(!showFavoritesOnly)}
-                        className={cn(
-                            "gap-2 transition-all h-8",
-                            showFavoritesOnly
-                                ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20 hover:text-yellow-500"
-                                : "text-muted-foreground hover:text-yellow-500"
-                        )}
-                    >
-                        <Star className="h-4 w-4" fill={showFavoritesOnly ? "currentColor" : "none"} />
-                        <span className="hidden sm:inline">Favorites</span>
-                    </Button>
+                    {!isTrash && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onFavoriteToggle(!showFavoritesOnly)}
+                            className={cn(
+                                "gap-2 transition-all h-8",
+                                showFavoritesOnly
+                                    ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20 hover:text-yellow-500"
+                                    : "text-muted-foreground hover:text-yellow-500"
+                            )}
+                        >
+                            <Star className="h-4 w-4" fill={showFavoritesOnly ? "currentColor" : "none"} />
+                            <span className="hidden sm:inline">Favorites</span>
+                        </Button>
+                    )}
                     <div className="text-sm text-muted-foreground border border-border/40 bg-muted/20 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
                         {total} {total === 1 ? "link" : "links"}
                     </div>
