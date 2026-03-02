@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
     const isAuthRoute =
         request.nextUrl.pathname === "/" ||
         request.nextUrl.pathname.startsWith("/auth/callback") ||
-        request.nextUrl.pathname.startsWith("/api/telegram/webhook");
+        request.nextUrl.pathname.startsWith("/api/telegram/webhook") ||
+        request.nextUrl.pathname.startsWith("/add");
 
     if (!user && !isAuthRoute) {
         const url = request.nextUrl.clone();
@@ -63,8 +64,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization)
          * - favicon.ico
-         * - public assets
+         * - public assets (manifest, service worker, icons, etc.)
          */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json)$).*)",
     ],
 };

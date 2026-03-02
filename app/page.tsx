@@ -1,17 +1,22 @@
 "use client";
 
+import { Suspense } from "react";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { H1, Lead } from "@/components/ui/typography";
+import { useSearchParams } from "next/navigation";
 
-export default function LandingPage() {
+function LoginContent() {
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+
     const handleGoogleLogin = async () => {
         const supabase = createClient();
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
             },
         });
     };
@@ -101,5 +106,17 @@ export default function LandingPage() {
                 </p>
             </footer>
         </div>
+    );
+}
+
+export default function LandingPage() {
+    return (
+        <Suspense fallback={
+            <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background overflow-hidden">
+                <BookOpen className="h-14 w-14 text-foreground animate-pulse" />
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     );
 }

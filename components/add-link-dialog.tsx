@@ -18,6 +18,9 @@ import { LinkItem } from "@/types";
 interface AddLinkDialogProps {
     onAddLink: (link: Omit<LinkItem, "id" | "created_at">) => void;
     trigger: React.ReactNode;
+    initialUrl?: string;
+    initialTitle?: string;
+    initialDescription?: string;
 }
 
 function extractDomain(url: string): string {
@@ -37,11 +40,19 @@ function isValidUrl(str: string): boolean {
     }
 }
 
-export function AddLinkDialog({ onAddLink, trigger }: AddLinkDialogProps) {
+export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitle = "", initialDescription = "" }: AddLinkDialogProps) {
     const [open, setOpen] = useState(false);
-    const [url, setUrl] = useState("");
-    const [title, setTitle] = useState("");
+    const [url, setUrl] = useState(initialUrl);
+    const [title, setTitle] = useState(initialTitle);
+    const [description] = useState(initialDescription);
     const [isExtracting, setIsExtracting] = useState(false);
+
+    // Open dialog automatically when initial URL is provided
+    useEffect(() => {
+        if (initialUrl) {
+            setOpen(true);
+        }
+    }, [initialUrl]);
 
     const domain = extractDomain(url);
     const faviconUrl = domain
@@ -73,6 +84,7 @@ export function AddLinkDialog({ onAddLink, trigger }: AddLinkDialogProps) {
         onAddLink({
             url,
             title: title || domain || url,
+            description: description || undefined,
             domain,
             favicon_url: faviconUrl,
             status: "unread",
