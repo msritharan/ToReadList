@@ -6,7 +6,7 @@ import {
     getCoreRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, Fragment, useEffect, useCallback, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
     ChevronLeft,
@@ -24,6 +24,7 @@ import {
     SlidersHorizontal,
     ArrowUpFromLine,
     ArrowDownToLine,
+    RotateCcw,
 } from "lucide-react";
 
 import {
@@ -120,9 +121,9 @@ export function DataTable<TValue>({
     emptyStateIcon = <Inbox className="h-8 w-8 text-muted-foreground/50" />,
 }: DataTableProps<TValue>) {
     const [rowSelection, setRowSelection] = useState({});
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     // Collect unique domains from the current page for the filter popover.
-    // Note: this only shows domains visible in the current result set.
     const availableDomains = useMemo(() => {
         const domains = Array.from(new Set(data.map((d) => d.domain).filter(Boolean)));
         return domains.sort();
@@ -137,12 +138,16 @@ export function DataTable<TValue>({
         availableDomains,
         statusFilter: activeStatus,
         onStatusFilterChange: onStatusChange,
+        onColumnResize: () => {},
+        onResetColumnSizes: () => {},
     };
 
     const table = useReactTable({
         data,
         columns: [selectionColumn, ...columns],
-        state: { rowSelection },
+        state: { 
+            rowSelection,
+        },
         onRowSelectionChange: setRowSelection,
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.id,
@@ -503,53 +508,65 @@ export function DataTable<TValue>({
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden md:block rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id} className="border-border/40 hover:bg-transparent">
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id} className="text-xs uppercase tracking-wider text-muted-foreground font-medium h-10 px-6">
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        data-state={row.getIsSelected() && "selected"}
-                                        className="group border-border/40 cursor-default hover:bg-muted/30 transition-colors h-14"
-                                    >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id} className="py-2 px-6">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </TableCell>
+                <div ref={tableContainerRef} className="hidden md:block rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
+                    <div className="w-full min-w-0">
+                        <Table style={{ width: "100%", tableLayout: "fixed" }}>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id} className="border-border/40 hover:bg-transparent">
+                                        {headerGroup.headers.map((header) => (
+                                            <TableHead 
+                                                key={header.id} 
+                                                className="text-xs uppercase tracking-wider text-muted-foreground font-medium h-10 px-4 relative overflow-hidden align-middle"
+                                                style={{ width: header.getSize(), minWidth: header.getSize() }}
+                                            >
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext()
+                                                    )}
+                                            </TableHead>
                                         ))}
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                        {isLoading ? null : (
-                                            <div className="flex flex-col items-center justify-center gap-2">
-                                                {emptyStateIcon}
-                                                <p>{emptyStateMessage}</p>
-                                            </div>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                ))}
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                        <TableRow
+                                            key={row.id}
+                                            data-state={row.getIsSelected() && "selected"}
+                                            className="group border-border/40 cursor-default hover:bg-muted/30 transition-colors h-14"
+                                        >
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell 
+                                                    key={cell.id} 
+                                                    className="py-2 px-4 min-w-0 overflow-hidden align-middle"
+                                                    style={{ width: cell.column.getSize() }}
+                                                >
+                                                    <div className="min-w-0 overflow-hidden">
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </div>
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                            {isLoading ? null : (
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    {emptyStateIcon}
+                                                    <p>{emptyStateMessage}</p>
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             </div>
 

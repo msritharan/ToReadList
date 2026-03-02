@@ -4,20 +4,20 @@ import { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { useState, Fragment } from "react";
 import {
-    Check,
-    MoreHorizontal,
-    Star,
-    Undo2,
-    SkipForward,
-    BookOpen,
-    ArrowUp,
     ArrowDown,
+    ArrowUp,
     ListFilter,
-    X,
+    MoreVertical,
     Search,
-    Trash2,
-    ChevronDown,
+    Star,
+    X,
     ChevronUp,
+    ChevronDown,
+    Check,
+    BookOpen,
+    SkipForward,
+    Undo2,
+    Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,21 @@ import {
 import { LinkItem } from "@/types";
 import { SortOrder, LinkStatus } from "@/hooks/use-links";
 import { cn } from "@/lib/utils";
+
+// ─── Column size configuration ─────────────────────────────────────────────────
+// Multipliers are relative weights for flexible columns (only title and description are resizable)
+// Fixed values are in pixels
+export const COLUMN_CONFIG = {
+    select: { type: "fixed" as const, value: 40, minSize: 40 },
+    title: { type: "multiplier" as const, value: 1.5, minSize: 80 },
+    description: { type: "multiplier" as const, value: 2, minSize: 50 },
+    domain: { type: "fixed" as const, value: 100, minSize: 60 },
+    status: { type: "fixed" as const, value: 100, minSize: 60 },
+    created_at: { type: "fixed" as const, value: 120, minSize: 70 },
+    actions: { type: "fixed" as const, value: 40, minSize: 40 },
+} as const;
+
+export type ColumnId = keyof typeof COLUMN_CONFIG;
 
 // ─── Column meta ────────────────────────────────────────────────────────────
 
@@ -59,6 +74,9 @@ export interface DataTableMeta {
     // Status filter
     statusFilter: LinkStatus;
     onStatusFilterChange: (status: LinkStatus) => void;
+    // Column resize
+    onColumnResize?: (columnId: string, width: number) => void;
+    onResetColumnSizes?: () => void;
 }
 
 // ─── Status config ───────────────────────────────────────────────────────────
@@ -288,8 +306,6 @@ function StatusFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
     );
 }
 
-// ─── Description Cell Component ───────────────────────────────────────────────
-
 type DescriptionCellProps = {
     description: string;
     variant?: "desktop" | "mobile";
@@ -310,8 +326,8 @@ function DescriptionCell({ description, variant = "desktop" }: DescriptionCellPr
     const isCompact = variant === "mobile";
 
     return (
-        <div className={isCompact ? "" : "pl-9 mt-0.5 max-w-md"}>
-            <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded || isCompact ? "whitespace-normal break-words line-clamp-2" : "line-clamp-2"}`}>
+        <div className={isCompact ? "" : "max-w-md"}>
+            <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded || isCompact ? "whitespace-normal break-words" : "whitespace-normal break-words line-clamp-2"}`}>
                 {displayText}
             </p>
             {!isCompact && shouldTruncateDesktop && (
@@ -341,27 +357,29 @@ function DescriptionCell({ description, variant = "desktop" }: DescriptionCellPr
 export const columns: ColumnDef<LinkItem>[] = [
     {
         accessorKey: "title",
-        header: "Article",
+        header: () => <span className="text-center block w-full">Article</span>,
+        size: 250,
+        minSize: 150,
         cell: ({ row }) => {
             const link = row.original;
             return (
-                <div className="flex items-center gap-4 py-1">
+                <div className="flex items-start gap-2 py-1 min-w-0 justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={link.favicon_url}
                         alt=""
-                        className="w-5 h-5 rounded-sm bg-muted object-cover"
+                        className="w-5 h-5 rounded-sm bg-muted object-cover shrink-0 mt-0.5"
                         onError={(e) => {
                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
                             (e.target as HTMLImageElement).className = "w-5 h-5 opacity-50";
                         }}
                     />
-                    <div className="flex items-center gap-2">
-                        <a href={link.url} target="_blank" rel="noreferrer" className="font-semibold text-[15px] hover:underline hover:text-primary transition-colors line-clamp-1">
+                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                        <a href={link.url} target="_blank" rel="noreferrer" className="font-semibold text-[15px] hover:underline hover:text-primary transition-colors whitespace-normal break-words">
                             {link.title}
                         </a>
                         {link.is_favorite && (
-                            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 shrink-0" />
+                            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 shrink-0 mt-0.5" />
                         )}
                     </div>
                 </div>
@@ -371,42 +389,55 @@ export const columns: ColumnDef<LinkItem>[] = [
     {
         id: "description",
         accessorKey: "description",
-        header: "Description",
+        header: () => <span className="text-center block w-full">Description</span>,
+        size: 300,
+        minSize: 100,
         cell: ({ row }) => {
             const description = row.original.description;
             if (!description) return null;
-            return <DescriptionCell description={description} />;
+            return <div className="text-center"><DescriptionCell description={description} /></div>;
         },
     },
     {
         accessorKey: "domain",
-        header: (ctx) => <DomainFilterHeader {...ctx} />,
-        cell: ({ row }) => <span className="text-muted-foreground text-sm">{row.original.domain}</span>,
+        header: (ctx) => <span className="text-center block w-full"><DomainFilterHeader {...ctx} /></span>,
+        size: 100,
+        minSize: 80,
+        cell: ({ row }) => <span className="text-muted-foreground text-sm truncate block text-center w-full">{row.original.domain}</span>,
     },
     {
         accessorKey: "status",
-        header: (ctx) => <StatusFilterHeader {...ctx} />,
+        header: (ctx) => <span className="text-center block w-full"><StatusFilterHeader {...ctx} /></span>,
+        size: 100,
+        minSize: 80,
         cell: ({ row }) => {
             const status = row.original.status;
             const config = statusConfig[status] || statusConfig.unread;
             return (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
-                    {config.label}
-                </span>
+                <div className="text-center">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
+                        {config.label}
+                    </span>
+                </div>
             );
         },
     },
     {
         accessorKey: "created_at",
-        header: (ctx) => <SortableDateHeader {...ctx} />,
+        header: (ctx) => <span className="text-center block w-full"><SortableDateHeader {...ctx} /></span>,
+        size: 120,
+        minSize: 80,
         cell: ({ row }) => {
             const dateStr = row.original.created_at;
             const formatted = formatDistanceToNow(new Date(dateStr), { addSuffix: true });
-            return <span className="text-muted-foreground text-sm">{formatted}</span>;
+            return <span className="text-muted-foreground text-sm text-center block w-full">{formatted}</span>;
         },
     },
     {
         id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        size: 48,
+        minSize: 48,
         cell: ({ row, table }) => {
             const link = row.original;
             const meta = table.options.meta as DataTableMeta;
@@ -415,9 +446,9 @@ export const columns: ColumnDef<LinkItem>[] = [
                 <div className="flex items-center justify-end">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[180px] bg-popover">
@@ -510,19 +541,25 @@ export const columns: ColumnDef<LinkItem>[] = [
 
 export const selectionColumn: ColumnDef<LinkItem> = {
     id: "select",
+    size: COLUMN_CONFIG.select.value,
+    minSize: 40,
     header: ({ table }) => (
-        <Checkbox
-            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-        />
+        <div className="text-center">
+            <Checkbox
+                checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                aria-label="Select all"
+            />
+        </div>
     ),
     cell: ({ row }) => (
-        <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-        />
+        <div className="text-center">
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+            />
+        </div>
     ),
     enableSorting: false,
     enableHiding: false,
