@@ -177,7 +177,7 @@ async function handleUrls(
             user_id: profile.id,
             url,
             title: meta.title,
-            description: meta.description,
+            description: meta.description?.slice(0, 1000) ?? null,
             domain: meta.domain,
             favicon_url: meta.favicon_url,
             source: meta.domain || "telegram",

@@ -454,6 +454,16 @@ export function DataTable<TValue>({
                                         )}
                                     </div>
                                 </div>
+                                {/* Description row */}
+                                <div className="pl-7">
+                                    {row.getVisibleCells().map(cell =>
+                                        cell.column.id === 'description' ? (
+                                            <Fragment key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </Fragment>
+                                        ) : null
+                                    )}
+                                </div>
                                 {/* Middle row: domain and date */}
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-7 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5 flex-1 min-w-0">

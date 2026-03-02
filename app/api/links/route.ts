@@ -87,11 +87,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, title, domain, favicon_url, status = "unread", is_favorite = false, source = "manual" } = body;
+    const { url, title, description, domain, favicon_url, status = "unread", is_favorite = false, source = "manual" } = body;
 
     if (!url) {
         return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
+
+    const truncatedDescription = description?.slice(0, 1000) ?? null;
 
     const { data, error } = await supabase
         .from("links")
@@ -99,6 +101,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             url,
             title: title || domain || url,
+            description: truncatedDescription,
             domain,
             favicon_url,
             status,

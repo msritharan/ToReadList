@@ -27,7 +27,12 @@ export async function PATCH(request: NextRequest) {
     const filteredUpdates: Record<string, unknown> = {};
     for (const field of allowedFields) {
         if (field in updates) {
-            filteredUpdates[field] = (updates as Record<string, unknown>)[field];
+            const value = (updates as Record<string, unknown>)[field];
+            if (field === "description" && typeof value === "string") {
+                filteredUpdates[field] = value.slice(0, 1000);
+            } else {
+                filteredUpdates[field] = value;
+            }
         }
     }
 

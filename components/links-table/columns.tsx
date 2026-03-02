@@ -2,7 +2,7 @@
 
 import { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import {
     Check,
     MoreHorizontal,
@@ -16,6 +16,8 @@ import {
     X,
     Search,
     Trash2,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -286,6 +288,42 @@ function StatusFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
     );
 }
 
+// ─── Description Cell Component ───────────────────────────────────────────────
+
+function DescriptionCell({ description }: { description: string }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const shouldTruncate = description.length > 150;
+    const displayText = isExpanded || !shouldTruncate
+        ? description
+        : description.slice(0, 150) + "...";
+
+    return (
+        <div className="pl-9 mt-0.5 max-w-md">
+            <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded ? "whitespace-normal break-words" : "line-clamp-2"}`}>
+                {displayText}
+            </p>
+            {shouldTruncate && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-xs text-primary hover:text-primary/80 font-medium mt-1 flex items-center gap-1 transition-colors"
+                >
+                    {isExpanded ? (
+                        <>
+                            <ChevronUp className="h-3 w-3" />
+                            Show less
+                        </>
+                    ) : (
+                        <>
+                            <ChevronDown className="h-3 w-3" />
+                            Show more
+                        </>
+                    )}
+                </button>
+            )}
+        </div>
+    );
+}
+
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 export const columns: ColumnDef<LinkItem>[] = [
@@ -316,6 +354,16 @@ export const columns: ColumnDef<LinkItem>[] = [
                     </div>
                 </div>
             );
+        },
+    },
+    {
+        id: "description",
+        accessorKey: "description",
+        header: "Description",
+        cell: ({ row }) => {
+            const description = row.original.description;
+            if (!description) return null;
+            return <DescriptionCell description={description} />;
         },
     },
     {
