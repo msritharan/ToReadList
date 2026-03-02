@@ -6,7 +6,7 @@ import {
     getCoreRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import {
     ChevronLeft,
     ChevronRight,
@@ -20,7 +20,18 @@ import {
     X,
     Undo2,
     Trash2,
+    SlidersHorizontal,
+    ArrowUpFromLine,
+    ArrowDownToLine,
 } from "lucide-react";
+
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 import {
     Table,
@@ -293,96 +304,269 @@ export function DataTable<TValue>({
                     )}
                 </div>
 
-                {/* Right: Favorites toggle + count */}
-                <div className="flex items-center gap-3">
+                {/* Right: Actions */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Mobile Sort & Filter */}
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="md:hidden gap-2 bg-background shadow-sm h-8"
+                            >
+                                <SlidersHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Sort & Filter</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[400px] max-h-[85vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Sort & Filter</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6 py-4">
+                                {/* Sort Section */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium leading-none">Sort By</h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button
+                                            variant={sortOrder === "desc" ? "default" : "outline"}
+                                            className="w-full justify-start gap-2"
+                                            onClick={() => {
+                                                if (sortOrder !== "desc") onToggleSortOrder();
+                                            }}
+                                        >
+                                            <ArrowDownToLine className="h-4 w-4" />
+                                            Newest First
+                                        </Button>
+                                        <Button
+                                            variant={sortOrder === "asc" ? "default" : "outline"}
+                                            className="w-full justify-start gap-2"
+                                            onClick={() => {
+                                                if (sortOrder !== "asc") onToggleSortOrder();
+                                            }}
+                                        >
+                                            <ArrowUpFromLine className="h-4 w-4" />
+                                            Oldest First
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium leading-none">Filter by Status</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(["all", "unread", "read", "skipped"] as const).map((status) => (
+                                            <Button
+                                                key={status}
+                                                variant={activeStatus === status ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => onStatusChange(status)}
+                                                className="capitalize"
+                                            >
+                                                {status}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Domain Filter */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium leading-none">Filter by Source</h4>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={domainFilter}
+                                        onChange={(e) => onDomainFilterChange(e.target.value)}
+                                    >
+                                        <option value="">All Sources</option>
+                                        {availableDomains.map((domain) => (
+                                            <option key={domain} value={domain}>
+                                                {domain}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onFavoriteToggle(!showFavoritesOnly)}
                         className={cn(
-                            "gap-2 transition-all",
+                            "gap-2 transition-all h-8",
                             showFavoritesOnly
                                 ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20 hover:text-yellow-500"
                                 : "text-muted-foreground hover:text-yellow-500"
                         )}
                     >
                         <Star className="h-4 w-4" fill={showFavoritesOnly ? "currentColor" : "none"} />
-                        Favorites
+                        <span className="hidden sm:inline">Favorites</span>
                     </Button>
-                    <div className="text-sm text-muted-foreground border border-border/40 bg-muted/20 px-3 py-1 rounded-full">
+                    <div className="text-sm text-muted-foreground border border-border/40 bg-muted/20 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
                         {total} {total === 1 ? "link" : "links"}
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm relative">
+            {/* Data View */}
+            <div className="relative">
                 {/* Loading overlay */}
                 {isLoading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px] rounded-xl">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                 )}
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id} className="border-border/40 hover:bg-transparent">
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id} className="text-xs uppercase tracking-wider text-muted-foreground font-medium h-10 px-6">
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                    className="group border-border/40 cursor-default hover:bg-muted/30 transition-colors h-14"
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-2 px-6">
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
+
+                {/* Mobile Card Grid View */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                            <div
+                                key={row.id}
+                                className={cn(
+                                    "flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all relative overflow-hidden",
+                                    row.getIsSelected() ? "border-primary/50 bg-primary/5" : "border-border/40"
+                                )}
+                            >
+                                {/* Top row: selection, title, actions */}
+                                <div className="flex items-start gap-3">
+                                    <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                                        {row.getVisibleCells().map(cell =>
+                                            cell.column.id === 'select' ? (
+                                                <Fragment key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Fragment>
+                                            ) : null
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 font-medium break-words">
+                                        {row.getVisibleCells().map(cell =>
+                                            cell.column.id === 'title' ? (
+                                                <Fragment key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Fragment>
+                                            ) : null
+                                        )}
+                                    </div>
+                                    <div className="-mt-1 -mr-2" onClick={(e) => e.stopPropagation()}>
+                                        {row.getVisibleCells().map(cell =>
+                                            cell.column.id === 'actions' ? (
+                                                <Fragment key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Fragment>
+                                            ) : null
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Middle row: domain and date */}
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-7 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                        {row.getVisibleCells().map(cell =>
+                                            cell.column.id === 'domain' ? (
+                                                <Fragment key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Fragment>
+                                            ) : null
+                                        )}
+                                    </div>
+                                    <div className="whitespace-nowrap tabular-nums">
+                                        {row.getVisibleCells().map(cell =>
+                                            cell.column.id === 'created_at' ? (
+                                                <Fragment key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Fragment>
+                                            ) : null
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Bottom row: status */}
+                                <div className="flex justify-start pl-7 mt-1 text-sm font-medium">
+                                    {row.getVisibleCells().map(cell =>
+                                        cell.column.id === 'status' ? (
+                                            <Fragment key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </Fragment>
+                                        ) : null
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground border rounded-xl border-dashed">
+                            {isLoading ? null : (
+                                <>
+                                    {emptyStateIcon}
+                                    <p className="mt-2">{emptyStateMessage}</p>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id} className="border-border/40 hover:bg-transparent">
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead key={header.id} className="text-xs uppercase tracking-wider text-muted-foreground font-medium h-10 px-6">
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext()
+                                                )}
+                                        </TableHead>
                                     ))}
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                    {isLoading ? null : (
-                                        <div className="flex flex-col items-center justify-center gap-2">
-                                            {emptyStateIcon}
-                                            <p>{emptyStateMessage}</p>
-                                        </div>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                        className="group border-border/40 cursor-default hover:bg-muted/30 transition-colors h-14"
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id} className="py-2 px-6">
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                        {isLoading ? null : (
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                {emptyStateIcon}
+                                                <p>{emptyStateMessage}</p>
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
             {/* Pagination Footer */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
                 {/* Page size selector */}
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Rows per page</span>
-                    <div className="flex items-center gap-1 p-0.5 rounded-md bg-muted/30 border border-border/40">
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap hidden min-[370px]:inline-block">Rows per page</span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap min-[370px]:hidden">Rows:</span>
+                    <div className="flex items-center gap-1 p-0.5 rounded-md bg-muted/30 border border-border/40 whitespace-nowrap">
                         {PAGE_SIZE_OPTIONS.map((size) => (
                             <button
                                 key={size}
                                 onClick={() => onLimitChange(size)}
                                 className={cn(
-                                    "px-2.5 py-1 rounded text-sm font-medium transition-all duration-150",
+                                    "px-2 sm:px-2.5 py-1 rounded text-sm font-medium transition-all duration-150",
                                     limit === size
                                         ? "bg-primary text-primary-foreground shadow-sm"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -395,19 +579,20 @@ export function DataTable<TValue>({
                 </div>
 
                 {/* Prev / Page X of N / Next */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-2 sm:gap-3">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onPageChange(page - 1)}
                         disabled={page <= 1 || isLoading}
-                        className="gap-1.5 text-muted-foreground hover:text-foreground"
+                        className="gap-1 text-muted-foreground hover:text-foreground px-2 sm:px-3"
                     >
                         <ChevronLeft className="h-4 w-4" />
-                        Previous
+                        <span className="hidden sm:inline">Previous</span>
+                        <span className="sm:hidden">Prev</span>
                     </Button>
 
-                    <span className="text-sm text-muted-foreground tabular-nums">
+                    <span className="text-xs sm:text-sm text-muted-foreground tabular-nums text-center whitespace-nowrap">
                         Page <span className="font-medium text-foreground">{page}</span> of{" "}
                         <span className="font-medium text-foreground">{totalPages}</span>
                     </span>
@@ -417,9 +602,10 @@ export function DataTable<TValue>({
                         size="sm"
                         onClick={() => onPageChange(page + 1)}
                         disabled={page >= totalPages || isLoading}
-                        className="gap-1.5 text-muted-foreground hover:text-foreground"
+                        className="gap-1 text-muted-foreground hover:text-foreground px-2 sm:px-3"
                     >
-                        Next
+                        <span className="hidden sm:inline">Next</span>
+                        <span className="sm:hidden">Next</span>
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
