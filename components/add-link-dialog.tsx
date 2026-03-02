@@ -45,6 +45,7 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
     const [url, setUrl] = useState(initialUrl);
     const [title, setTitle] = useState(initialTitle);
     const [description] = useState(initialDescription);
+    const [tags, setTags] = useState("");
     const [isExtracting, setIsExtracting] = useState(false);
 
     // Open dialog automatically when initial URL is provided
@@ -81,6 +82,11 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
     const handleSubmit = () => {
         if (!url || !urlValid) return;
 
+        const parsedTags = tags
+            .split(",")
+            .map((t) => t.trim().toLowerCase())
+            .filter((t) => t.length > 0);
+
         onAddLink({
             url,
             title: title || domain || url,
@@ -89,11 +95,13 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
             favicon_url: faviconUrl,
             status: "unread",
             is_favorite: false,
+            tags: parsedTags,
         });
 
         // Reset and close
         setUrl("");
         setTitle("");
+        setTags("");
         setOpen(false);
     };
 
@@ -102,6 +110,7 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
         if (!newOpen) {
             setUrl("");
             setTitle("");
+            setTags("");
         }
     };
 
@@ -158,6 +167,26 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
                             }
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
+                        />
+                    </div>
+
+                    {/* Tags Input */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="tags"
+                            className="text-sm font-medium text-foreground"
+                        >
+                            Tags{" "}
+                            <span className="text-muted-foreground font-normal">
+                                (comma separated)
+                            </span>
+                        </label>
+                        <Input
+                            id="tags"
+                            placeholder="work, tech, reading"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
                             className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
                         />
                     </div>

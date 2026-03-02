@@ -17,11 +17,13 @@ export interface LinksQueryState {
     search: string;
     sortBy: "created_at";
     sortOrder: SortOrder;
-    domainFilter: string; // empty string = no filter
+    domainFilter: string;
+    tagFilter: string;
 }
 
 export interface LinksQueryResult {
     links: LinkItem[];
+    allLinks: LinkItem[];
     total: number;
     totalPages: number;
     isLoading: boolean;
@@ -34,6 +36,7 @@ export interface LinksQueryResult {
     setSortOrder: (order: SortOrder) => void;
     toggleSortOrder: () => void;
     setDomainFilter: (domain: string) => void;
+    setTagFilter: (tag: string) => void;
     addLink: (link: Omit<LinkItem, "id" | "created_at">) => Promise<void>;
     updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
     bulkUpdateLinks: (ids: string[], updates: Partial<LinkItem>) => Promise<void>;
@@ -53,6 +56,7 @@ export function useLinksQuery(): LinksQueryResult {
         sortBy: "created_at",
         sortOrder: "desc",
         domainFilter: "",
+        tagFilter: "",
     });
 
     // 1. Fetch ALL links once (up to 2000)
@@ -88,6 +92,14 @@ export function useLinksQuery(): LinksQueryResult {
         // Apply Domain Filter
         if (queryState.domainFilter.trim()) {
             filtered = filtered.filter((l) => l.domain === queryState.domainFilter.trim());
+        }
+
+        // Apply Tag Filter
+        if (queryState.tagFilter.trim()) {
+            const lowerTag = queryState.tagFilter.toLowerCase();
+            filtered = filtered.filter((l) => 
+                l.tags?.some((tag) => tag.toLowerCase() === lowerTag)
+            );
         }
 
         // Apply Search Filter
@@ -170,6 +182,10 @@ export function useLinksQuery(): LinksQueryResult {
 
     const setDomainFilter = useCallback((domainFilter: string) => {
         setQueryState((prev) => ({ ...prev, domainFilter, page: 1 }));
+    }, []);
+
+    const setTagFilter = useCallback((tagFilter: string) => {
+        setQueryState((prev) => ({ ...prev, tagFilter, page: 1 }));
     }, []);
 
 
@@ -304,6 +320,7 @@ export function useLinksQuery(): LinksQueryResult {
 
     return {
         links: currentLinks,
+        allLinks,
         total,
         totalPages,
         isLoading: isFetchingLinks,
@@ -316,6 +333,7 @@ export function useLinksQuery(): LinksQueryResult {
         setSortOrder,
         toggleSortOrder,
         setDomainFilter,
+        setTagFilter,
         addLink: async (link) => { await addMutation.mutateAsync(link); },
         updateLink: async (id, updates) => { await updateMutation.mutateAsync({ id, updates }); },
         bulkUpdateLinks: async (ids, updates) => { await bulkUpdateMutation.mutateAsync({ ids, updates }); },

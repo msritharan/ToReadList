@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, title, description, domain, favicon_url, status = "unread", is_favorite = false, source = "manual" } = body;
+    const { url, title, description, domain, favicon_url, status = "unread", is_favorite = false, source = "manual", tags = [] } = body;
 
     if (!url) {
         return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
             is_favorite,
             source,
             extraction_status: "success",
+            tags,
         })
         .select()
         .single();

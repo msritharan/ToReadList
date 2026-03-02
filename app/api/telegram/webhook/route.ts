@@ -17,16 +17,15 @@ import { extractMetadata } from "@/lib/metadata";
  *   /start <token>  → link Telegram to a user account
  *   /help           → reply with usage instructions
  *   URLs            → save as links for the user
- *   Other           → reply with help text
+ *   #tags           → apply to pending link if in WAITING_FOR_TAGS state
+ *   Other           → reply with help text (in IDLE) or ignore (in WAITING_FOR_TAGS)
  */
 export async function POST(request: NextRequest) {
-    // 1. Verify webhook secret
     const secret = request.headers.get("x-telegram-bot-api-secret-token");
     if (!verifyWebhookSecret(secret)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 2. Parse the update
     let update: TelegramUpdate;
     try {
         update = await request.json();
@@ -36,14 +35,12 @@ export async function POST(request: NextRequest) {
 
     const message = update.message;
     if (!message || !message.chat) {
-        // Not a message update (could be edited_message, callback_query, etc.)
         return NextResponse.json({ ok: true });
     }
 
     const chatId = message.chat.id;
     const supabase = createAdminClient();
 
-    // 3. Handle bot commands
     const command = getBotCommand(message);
 
     if (command === "/start") {
@@ -56,35 +53,177 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true });
     }
 
-    // 4. Handle URLs — save as links
-    const urls = extractUrls(message);
-    if (urls.length > 0) {
-        await handleUrls(supabase, chatId, urls);
+    const profile = await getProfile(supabase, chatId);
+    if (!profile) {
+        await sendMessage(
+            chatId,
+            "🔗 Your Telegram isn't connected to a ToReadList account yet.\n\nGo to Settings → Channels in the web app to connect."
+        );
         return NextResponse.json({ ok: true });
     }
 
-    // 5. Unknown message — send help
-    await sendMessage(
-        chatId,
-        "I didn't find any links in that message. Send me a URL and I'll save it for you!\n\nType /help for more info."
-    );
+    const messageText = message.text ?? "";
+    const urls = extractUrls(message);
+    const hashtags = extractHashtags(messageText);
+
+    if (profile.pending_tag_link_id) {
+        await handleWaitingForTags(supabase, profile, urls, hashtags);
+    } else {
+        await handleIdleState(supabase, profile, urls, hashtags);
+    }
 
     return NextResponse.json({ ok: true });
 }
 
-// ─── Command Handlers ───────────────────────────────────────────────
+async function getProfile(supabase: ReturnType<typeof createAdminClient>, chatId: number) {
+    const { data } = await supabase
+        .from("profiles")
+        .select("id, pending_tag_link_id")
+        .eq("telegram_chat_id", String(chatId))
+        .single();
+    return data;
+}
+
+async function handleIdleState(
+    supabase: ReturnType<typeof createAdminClient>,
+    profile: { id: string; pending_tag_link_id: string | null },
+    urls: string[],
+    hashtags: string[]
+) {
+    const chatId = Number((await supabase.from("profiles").select("telegram_chat_id").eq("id", profile.id).single()).data?.telegram_chat_id);
+
+    if (urls.length === 0) {
+        await sendMessage(
+            chatId,
+            "I didn't find any links in that message. Send me a URL and I'll save it to your reading list!\n\nType /help for more info."
+        );
+        return;
+    }
+
+    const savedLink = await saveLink(supabase, profile.id, urls[0], chatId);
+    if (!savedLink) return;
+
+    await supabase
+        .from("profiles")
+        .update({ pending_tag_link_id: savedLink.id })
+        .eq("id", profile.id);
+
+    const title = savedLink.title ?? "your link";
+    await sendMessage(
+        chatId,
+        `✅ Saved: "${title}"\n\nAdd tags (e.g., #work #tech) or send another link.`
+    );
+}
+
+async function handleWaitingForTags(
+    supabase: ReturnType<typeof createAdminClient>,
+    profile: { id: string; pending_tag_link_id: string | null },
+    urls: string[],
+    hashtags: string[]
+) {
+    const chatId = Number((await supabase.from("profiles").select("telegram_chat_id").eq("id", profile.id).single()).data?.telegram_chat_id);
+
+    if (urls.length > 0) {
+        await supabase
+            .from("profiles")
+            .update({ pending_tag_link_id: null })
+            .eq("id", profile.id);
+
+        const savedLink = await saveLink(supabase, profile.id, urls[0], chatId);
+        if (!savedLink) return;
+
+        await supabase
+            .from("profiles")
+            .update({ pending_tag_link_id: savedLink.id })
+            .eq("id", profile.id);
+
+        const title = savedLink.title ?? "your link";
+        await sendMessage(
+            chatId,
+            `✅ Saved: "${title}"\n\nAdd tags (e.g., #work #tech) or send another link.`
+        );
+        return;
+    }
+
+    if (hashtags.length > 0) {
+        const normalizedTags = hashtags.map((tag) => tag.toLowerCase());
+
+        await supabase
+            .from("links")
+            .update({ tags: normalizedTags })
+            .eq("id", profile.pending_tag_link_id);
+
+        await supabase
+            .from("profiles")
+            .update({ pending_tag_link_id: null })
+            .eq("id", profile.id);
+
+        const tagList = hashtags.map((t) => `#${t}`).join(" ");
+        await sendMessage(
+            chatId,
+            `✅ Tags added: ${tagList}\n\nSend me more links whenever you're ready!`
+        );
+        return;
+    }
+
+    await sendMessage(
+        chatId,
+        "Add tags (e.g., #work #tech) or send another link."
+    );
+}
+
+async function saveLink(
+    supabase: ReturnType<typeof createAdminClient>,
+    userId: string,
+    url: string,
+    chatId: number
+) {
+    const meta = await extractMetadata(url);
+
+    const { data: savedLink, error: insertError } = await supabase
+        .from("links")
+        .insert({
+            user_id: userId,
+            url,
+            title: meta.title,
+            description: meta.description?.slice(0, 1000) ?? null,
+            domain: meta.domain,
+            favicon_url: meta.favicon_url,
+            source: meta.domain || "telegram",
+            status: "unread",
+            extraction_status: meta.extraction_status,
+            tags: [],
+        })
+        .select("id, url, title")
+        .single();
+
+    if (insertError) {
+        console.error("[Telegram] Failed to save link:", insertError);
+        await sendMessage(
+            chatId,
+            "❌ Failed to save the link. Please try again."
+        );
+        return null;
+    }
+
+    return savedLink;
+}
+
+function extractHashtags(text: string): string[] {
+    const regex = /#([a-zA-Z0-9_]+)/g;
+    const matches = text.match(regex);
+    return matches ? matches.map((t) => t.slice(1)) : [];
+}
 
 async function handleStart(
     supabase: ReturnType<typeof createAdminClient>,
     chatId: number,
     text: string
 ) {
-    // Extract the token from "/start <token>"
     const parts = text.trim().split(/\s+/);
     const token = parts.length > 1 ? parts[1] : null;
 
     if (!token) {
-        // Plain /start with no token — just greet
         await sendMessage(
             chatId,
             "👋 Welcome to ToReadList!\n\nTo connect your account, go to Settings → Channels in the web app and click 'Connect Telegram'.\n\nOnce connected, just send me any URL and I'll save it to your reading list!"
@@ -92,7 +231,6 @@ async function handleStart(
         return;
     }
 
-    // Look up the profile with this link token
     const { data: profile, error } = await supabase
         .from("profiles")
         .select("id, telegram_link_token, telegram_link_expires_at")
@@ -107,7 +245,6 @@ async function handleStart(
         return;
     }
 
-    // Check if the token has expired
     if (
         profile.telegram_link_expires_at &&
         new Date(profile.telegram_link_expires_at) < new Date()
@@ -119,13 +256,12 @@ async function handleStart(
         return;
     }
 
-    // Link the chat ID to the user's profile
     const { error: updateError } = await supabase
         .from("profiles")
         .update({
             telegram_chat_id: String(chatId),
             telegram_verified: true,
-            telegram_link_token: null, // clear the token
+            telegram_link_token: null,
             telegram_link_expires_at: null,
         })
         .eq("id", profile.id);
@@ -145,78 +281,12 @@ async function handleStart(
     );
 }
 
-async function handleUrls(
-    supabase: ReturnType<typeof createAdminClient>,
-    chatId: number,
-    urls: string[]
-) {
-    // Look up the user by chat ID
-    const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("telegram_chat_id", String(chatId))
-        .single();
-
-    if (profileError || !profile) {
-        await sendMessage(
-            chatId,
-            "🔗 Your Telegram isn't connected to a ToReadList account yet.\n\nGo to Settings → Channels in the web app to connect."
-        );
-        return;
-    }
-
-    // Extract metadata for each URL (in parallel)
-    const metadataResults = await Promise.all(
-        urls.map((url) => extractMetadata(url))
-    );
-
-    // Build link rows with extracted metadata
-    const linksToInsert = urls.map((url, i) => {
-        const meta = metadataResults[i];
-        return {
-            user_id: profile.id,
-            url,
-            title: meta.title,
-            description: meta.description?.slice(0, 1000) ?? null,
-            domain: meta.domain,
-            favicon_url: meta.favicon_url,
-            source: meta.domain || "telegram",
-            status: "unread",
-            extraction_status: meta.extraction_status,
-        };
-    });
-
-    const { data: savedLinks, error: insertError } = await supabase
-        .from("links")
-        .insert(linksToInsert)
-        .select("id, url, title");
-
-    if (insertError) {
-        console.error("[Telegram] Failed to save links:", insertError);
-        await sendMessage(
-            chatId,
-            "❌ Failed to save the link(s). Please try again."
-        );
-        return;
-    }
-
-    const count = savedLinks?.length ?? urls.length;
-    if (count === 1) {
-        const title = savedLinks?.[0]?.title ?? "your link";
-        await sendMessage(chatId, `✅ Saved: "${title}"\n\nCheck your reading list.`);
-    } else {
-        await sendMessage(
-            chatId,
-            `✅ Saved ${count} links! Check your reading list.`
-        );
-    }
-}
-
 async function sendHelpMessage(chatId: number) {
     await sendMessage(
         chatId,
         "📚 *ToReadList Bot*\n\n" +
         "Send me any URL and I'll save it to your reading list\\.\n\n" +
+        "Use #hashtags to add tags to your links\\.\n\n" +
         "*Commands:*\n" +
         "/start — Connect your account\n" +
         "/help — Show this message\n\n" +

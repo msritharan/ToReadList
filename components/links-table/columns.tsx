@@ -18,10 +18,21 @@ import {
     SkipForward,
     Undo2,
     Trash2,
+    Tag,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -38,6 +49,31 @@ import { LinkItem } from "@/types";
 import { SortOrder, LinkStatus } from "@/hooks/use-links";
 import { cn } from "@/lib/utils";
 
+// ─── Tag color utilities ───────────────────────────────────────────────────────
+
+const TAG_COLORS = [
+    { bg: "bg-blue-500/15", text: "text-blue-400", border: "border-blue-500/20" },
+    { bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/20" },
+    { bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/20" },
+    { bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/20" },
+    { bg: "bg-cyan-500/15", text: "text-cyan-400", border: "border-cyan-500/20" },
+    { bg: "bg-indigo-500/15", text: "text-indigo-400", border: "border-indigo-500/20" },
+    { bg: "bg-purple-500/15", text: "text-purple-400", border: "border-purple-500/20" },
+    { bg: "bg-pink-500/15", text: "text-pink-400", border: "border-pink-500/20" },
+    { bg: "bg-teal-500/15", text: "text-teal-400", border: "border-teal-500/20" },
+    { bg: "bg-orange-500/15", text: "text-orange-400", border: "border-orange-500/20" },
+];
+
+function getTagColor(tag: string) {
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+        hash = ((hash << 5) - hash) + tag.charCodeAt(i);
+        hash = hash & hash;
+    }
+    const index = Math.abs(hash) % TAG_COLORS.length;
+    return TAG_COLORS[index];
+}
+
 // ─── Column size configuration ─────────────────────────────────────────────────
 // Multipliers are relative weights for flexible columns (only title and description are resizable)
 // Fixed values are in pixels
@@ -46,6 +82,7 @@ export const COLUMN_CONFIG = {
     title: { type: "multiplier" as const, value: 1.5, minSize: 80 },
     description: { type: "multiplier" as const, value: 2, minSize: 50 },
     domain: { type: "fixed" as const, value: 100, minSize: 60 },
+    tags: { type: "fixed" as const, value: 120, minSize: 80 },
     status: { type: "fixed" as const, value: 100, minSize: 60 },
     created_at: { type: "fixed" as const, value: 120, minSize: 70 },
     actions: { type: "fixed" as const, value: 40, minSize: 40 },
@@ -71,6 +108,10 @@ export interface DataTableMeta {
     domainFilter: string;
     onDomainFilterChange: (domain: string) => void;
     availableDomains: string[];
+    // Tag filter
+    tagFilter: string;
+    onTagFilterChange: (tag: string) => void;
+    availableTags: string[];
     // Status filter
     statusFilter: LinkStatus;
     onStatusFilterChange: (status: LinkStatus) => void;
@@ -224,6 +265,101 @@ function DomainFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
     );
 }
 
+function TagFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
+    const meta = table.options.meta as DataTableMeta;
+    const { tagFilter, onTagFilterChange, availableTags } = meta;
+    const isActive = tagFilter !== "";
+    const [search, setSearch] = useState("");
+
+    const filtered = availableTags.filter((t) =>
+        t.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <Popover onOpenChange={() => setSearch("")}>
+            <PopoverTrigger asChild>
+                <button
+                    className={cn(
+                        "flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium hover:text-foreground transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    Tags
+                    <ListFilter className={cn("h-3.5 w-3.5", isActive && "text-primary")} />
+                    {isActive && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
+                </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-0 bg-popover border-border/60">
+                {/* Header */}
+                <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b border-border/40">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Filter by Tag
+                    </span>
+                    {isActive && (
+                        <button
+                            onClick={() => onTagFilterChange("")}
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                        >
+                            <X className="h-3 w-3" />
+                            Clear
+                        </button>
+                    )}
+                </div>
+                {/* Search input */}
+                <div className="px-2 pt-2 pb-1">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            autoFocus
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search tags..."
+                            className="w-full pl-7 pr-2 py-1.5 text-sm rounded-md bg-muted/40 border border-border/40 focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/60"
+                        />
+                    </div>
+                </div>
+                {/* Scrollable option list */}
+                <div className="overflow-y-auto max-h-48 px-2 pb-2 space-y-0.5">
+                    {search === "" && (
+                        <button
+                            onClick={() => onTagFilterChange("")}
+                            className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
+                                tagFilter === ""
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            All tags
+                        </button>
+                    )}
+                    {filtered.map((tag) => (
+                        <button
+                            key={tag}
+                            onClick={() => onTagFilterChange(tag)}
+                            className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-sm transition-colors truncate",
+                                tagFilter === tag
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            {tag}
+                        </button>
+                    ))}
+                    {filtered.length === 0 && (
+                        <p className="text-xs text-muted-foreground px-2 py-2 italic text-center">
+                            No tags match &ldquo;{search}&rdquo;
+                        </p>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
 function StatusFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
     const meta = table.options.meta as DataTableMeta;
     const { statusFilter, onStatusFilterChange } = meta;
@@ -352,6 +488,57 @@ function DescriptionCell({ description, variant = "desktop" }: DescriptionCellPr
     );
 }
 
+function TagEditMenuItem({ link, onUpdate }: { link: LinkItem; onUpdate: (id: string, updates: Partial<LinkItem>) => void }) {
+    const [open, setOpen] = useState(false);
+    const [tags, setTags] = useState(link.tags?.join(", ") || "");
+
+    const handleSave = () => {
+        const parsedTags = tags
+            .split(",")
+            .map((t) => t.trim().toLowerCase())
+            .filter((t) => t.length > 0);
+        onUpdate(link.id, { tags: parsedTags });
+        setOpen(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <DropdownMenuItem className="cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                    <Tag className="mr-2 h-4 w-4 text-violet-500" />
+                    Edit Tags
+                </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Tags</DialogTitle>
+                    <DialogDescription>
+                        Add or remove tags for this link. Tags are comma separated.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Input
+                        placeholder="work, tech, reading"
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSave();
+                        }}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSave}>
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 export const columns: ColumnDef<LinkItem>[] = [
@@ -404,6 +591,36 @@ export const columns: ColumnDef<LinkItem>[] = [
         size: 100,
         minSize: 80,
         cell: ({ row }) => <span className="text-muted-foreground text-sm truncate block text-center w-full">{row.original.domain}</span>,
+    },
+    {
+        accessorKey: "tags",
+        header: (ctx) => <span className="text-center block w-full"><TagFilterHeader {...ctx} /></span>,
+        size: 120,
+        minSize: 80,
+        cell: ({ row }) => {
+            const tags = row.original.tags;
+            if (!tags || tags.length === 0) return <span className="text-muted-foreground text-sm text-center block w-full">—</span>;
+            return (
+                <div className="text-center">
+                    <div className="flex flex-wrap justify-center gap-1">
+                        {tags.slice(0, 3).map((tag) => {
+                            const color = getTagColor(tag);
+                            return (
+                                <span
+                                    key={tag}
+                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}
+                                >
+                                    {tag}
+                                </span>
+                            );
+                        })}
+                        {tags.length > 3 && (
+                            <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+                        )}
+                    </div>
+                </div>
+            );
+        },
     },
     {
         accessorKey: "status",
@@ -519,6 +736,10 @@ export const columns: ColumnDef<LinkItem>[] = [
                                         <Star className="mr-2 h-4 w-4 text-yellow-500" fill={link.is_favorite ? "currentColor" : "none"} />
                                         {link.is_favorite ? "Unfavorite" : "Favorite"}
                                     </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <TagEditMenuItem link={link} onUpdate={meta.onLinkUpdate} />
 
                                     <DropdownMenuSeparator />
 

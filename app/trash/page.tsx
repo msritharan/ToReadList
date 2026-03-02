@@ -153,6 +153,7 @@ export default function TrashPage() {
                         showFavoritesOnly={false}
                         sortOrder={sortOrder}
                         domainFilter={domainFilter}
+                        tagFilter=""
                         isLoading={isLoading && trashItems.length === 0}
                         // Pagination
                         page={page}
@@ -172,6 +173,7 @@ export default function TrashPage() {
                             setDomainFilter(domain);
                             setPage(1);
                         }}
+                        onTagFilterChange={() => { }}
                         emptyStateMessage="Your trash is empty."
                         emptyStateIcon={<PackageOpen className="h-10 w-10 text-muted-foreground/40" />}
                     />

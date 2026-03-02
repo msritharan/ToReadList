@@ -31,6 +31,7 @@ const emptyMessages: Record<string, { message: string; icon: React.ReactNode }> 
 export default function Dashboard() {
   const {
     links,
+    allLinks,
     total,
     totalPages,
     isLoading,
@@ -42,6 +43,7 @@ export default function Dashboard() {
     setSearch,
     toggleSortOrder,
     setDomainFilter,
+    setTagFilter,
     addLink,
     updateLink,
     bulkUpdateLinks,
@@ -83,11 +85,13 @@ export default function Dashboard() {
           <DataTable
             columns={columns}
             data={links}
+            allLinks={allLinks}
             meta={{ onLinkUpdate: updateLink, onBulkUpdate: bulkUpdateLinks, onDeleteLink: deleteLink, onBulkDeleteLink: bulkDeleteLinks }}
             activeStatus={queryState.status}
             showFavoritesOnly={queryState.isFavorite}
             sortOrder={queryState.sortOrder}
             domainFilter={queryState.domainFilter}
+            tagFilter={queryState.tagFilter}
             isLoading={isLoading}
             page={queryState.page}
             totalPages={totalPages}
@@ -99,6 +103,7 @@ export default function Dashboard() {
             onLimitChange={setLimit}
             onToggleSortOrder={toggleSortOrder}
             onDomainFilterChange={setDomainFilter}
+            onTagFilterChange={setTagFilter}
             emptyStateMessage={emptyMessages[queryState.status]?.message || emptyMessages.all.message}
             emptyStateIcon={emptyMessages[queryState.status]?.icon || emptyMessages.all.icon}
           />

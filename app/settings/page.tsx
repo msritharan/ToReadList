@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, Clock, Download, Trash2, Loader2, ExternalLink, CheckCircle2, Unplug } from "lucide-react";
+import { Send, Clock, Download, Trash2, Loader2, ExternalLink, CheckCircle2, Unplug, Smartphone, ChevronDown, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
 import { H3, P, Small } from "@/components/ui/typography";
+import { PWAInstallGuide } from "@/components/pwa-install-guide";
 
 type TelegramStatus = "loading" | "disconnected" | "connecting" | "connected";
 
@@ -13,6 +14,7 @@ export default function Settings() {
     const [telegramStatus, setTelegramStatus] = useState<TelegramStatus>("loading");
     const [deepLink, setDeepLink] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showPWAInstructions, setShowPWAInstructions] = useState(false);
 
     // Check Telegram connection status on mount
     useEffect(() => {
@@ -170,6 +172,41 @@ export default function Settings() {
                                             </div>
                                         </div>
                                     </div>
+                                )}
+                            </div>
+
+                            {/* PWA Channel */}
+                            <div className="rounded-lg px-4 py-3.5 transition-colors hover:bg-muted/40">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-9 w-9 flex items-center justify-center rounded-lg bg-indigo-400/10">
+                                        <Smartphone className="h-[18px] w-[18px] text-indigo-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <P className="text-sm font-medium mt-0">Progressive Web App</P>
+                                        <Small className="text-muted-foreground">
+                                            Install our app to share links directly from your device.
+                                        </Small>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowPWAInstructions(!showPWAInstructions)}
+                                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                                            title={showPWAInstructions ? "Hide instructions" : "How to install"}
+                                        >
+                                            {showPWAInstructions ? (
+                                                <ChevronDown className="h-3.5 w-3.5" />
+                                            ) : (
+                                                <ChevronRight className="h-3.5 w-3.5" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Installation Instructions */}
+                                {showPWAInstructions && (
+                                    <PWAInstallGuide isOpen={true} />
                                 )}
                             </div>
                         </div>

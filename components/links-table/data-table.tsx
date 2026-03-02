@@ -64,6 +64,7 @@ import {
 interface DataTableProps<TValue> {
     columns: ColumnDef<LinkItem, TValue>[];
     data: LinkItem[];
+    allLinks?: LinkItem[];
     meta: {
         onLinkUpdate: (id: string, updates: Partial<LinkItem>) => void;
         onBulkUpdate: (ids: string[], updates: Partial<LinkItem>) => void;
@@ -75,25 +76,23 @@ interface DataTableProps<TValue> {
         onBulkRestore?: (ids: string[]) => void;
         onBulkDeleteForever?: (ids: string[]) => void;
     };
-    // Server-driven filter state
     activeStatus: LinkStatus;
     showFavoritesOnly: boolean;
     sortOrder: SortOrder;
     domainFilter: string;
+    tagFilter: string;
     isLoading: boolean;
-    // Pagination
     page: number;
     totalPages: number;
     total: number;
     limit: PageSizeOption;
-    // Callbacks
     onStatusChange: (status: LinkStatus) => void;
     onFavoriteToggle: (val: boolean) => void;
     onPageChange: (page: number) => void;
     onLimitChange: (limit: PageSizeOption) => void;
     onToggleSortOrder: () => void;
     onDomainFilterChange: (domain: string) => void;
-    // Empty state
+    onTagFilterChange: (tag: string) => void;
     emptyStateMessage?: string;
     emptyStateIcon?: React.ReactNode;
 }
@@ -101,11 +100,13 @@ interface DataTableProps<TValue> {
 export function DataTable<TValue>({
     columns,
     data,
+    allLinks,
     meta,
     activeStatus,
     showFavoritesOnly,
     sortOrder,
     domainFilter,
+    tagFilter,
     isLoading,
     page,
     totalPages,
@@ -117,17 +118,32 @@ export function DataTable<TValue>({
     onLimitChange,
     onToggleSortOrder,
     onDomainFilterChange,
+    onTagFilterChange,
     emptyStateMessage = "No links found.",
     emptyStateIcon = <Inbox className="h-8 w-8 text-muted-foreground/50" />,
 }: DataTableProps<TValue>) {
     const [rowSelection, setRowSelection] = useState({});
     const tableContainerRef = useRef<HTMLDivElement>(null);
 
-    // Collect unique domains from the current page for the filter popover.
+    // Collect unique domains from ALL links for the filter dropdown
     const availableDomains = useMemo(() => {
-        const domains = Array.from(new Set(data.map((d) => d.domain).filter(Boolean)));
-        return domains.sort();
-    }, [data]);
+        const domains = new Set<string>();
+        (allLinks || data).forEach((d) => {
+            if (d.domain) domains.add(d.domain);
+        });
+        return Array.from(domains).sort();
+    }, [allLinks, data]);
+
+    // Collect unique tags from ALL links for the filter dropdown
+    const availableTags = useMemo(() => {
+        const tags = new Set<string>();
+        (allLinks || data).forEach((d) => {
+            if (d.tags) {
+                d.tags.forEach((tag) => tags.add(tag));
+            }
+        });
+        return Array.from(tags).sort();
+    }, [allLinks, data]);
 
     const tableMeta: DataTableMeta = {
         ...meta,
@@ -136,6 +152,9 @@ export function DataTable<TValue>({
         domainFilter,
         onDomainFilterChange,
         availableDomains,
+        tagFilter,
+        onTagFilterChange,
+        availableTags,
         statusFilter: activeStatus,
         onStatusFilterChange: onStatusChange,
         onColumnResize: () => {},
@@ -292,6 +311,15 @@ export function DataTable<TValue>({
                             <X className="h-3 w-3" />
                         </button>
                     )}
+                    {tagFilter && (
+                        <button
+                            onClick={() => onTagFilterChange("")}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-violet-500/10 text-violet-500 border border-violet-500/20 hover:bg-violet-500/20 transition-colors"
+                        >
+                            Tag: {tagFilter}
+                            <X className="h-3 w-3" />
+                        </button>
+                    )}
                     {(!isTrash && showFavoritesOnly) && (
                         <button
                             onClick={() => onFavoriteToggle(false)}
@@ -380,6 +408,23 @@ export function DataTable<TValue>({
                                         {availableDomains.map((domain) => (
                                             <option key={domain} value={domain}>
                                                 {domain}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Tag Filter */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-medium leading-none">Filter by Tag</h4>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={tagFilter}
+                                        onChange={(e) => onTagFilterChange(e.target.value)}
+                                    >
+                                        <option value="">All Tags</option>
+                                        {availableTags.map((tag) => (
+                                            <option key={tag} value={tag}>
+                                                {tag}
                                             </option>
                                         ))}
                                     </select>
