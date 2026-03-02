@@ -280,7 +280,7 @@ function TagFilterHeader({ table }: HeaderContext<LinkItem, unknown>) {
             <PopoverTrigger asChild>
                 <button
                     className={cn(
-                        "flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium hover:text-foreground transition-colors",
+                        "flex items-center justify-center gap-1.5 w-full text-xs uppercase tracking-wider font-medium hover:text-foreground transition-colors",
                         isActive ? "text-primary" : "text-muted-foreground"
                     )}
                 >
