@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { LinkItem } from "@/types";
 
 export interface UseTrashResult {
@@ -16,112 +17,166 @@ export interface UseTrashResult {
 }
 
 export function useTrash(): UseTrashResult {
-    const [trashItems, setTrashItems] = useState<LinkItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const fetchTrash = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch("/api/trash");
-            if (!res.ok) throw new Error("Failed to fetch trash");
+    // Use the exact same query as use-links to share the cache!
+    const {
+        data: allLinks = [],
+        isLoading,
+        refetch,
+    } = useQuery<LinkItem[]>({
+        queryKey: ["links"],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            params.set("limit", "2000"); // Fetch all
+            const res = await fetch(`/api/links?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch links");
             const json = await res.json();
-            setTrashItems(json.data ?? []);
-        } catch (err) {
-            console.error("Error fetching trash:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+            return json.data ?? [];
+        },
+    });
 
-    useEffect(() => {
-        fetchTrash();
-    }, [fetchTrash]);
+    // Derive trash items synchronously
+    const trashItems = useMemo(() => {
+        return allLinks
+            .filter((l) => l.deleted_at !== null)
+            .sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
+    }, [allLinks]);
 
-    const restoreItem = useCallback(
-        async (id: string) => {
-            setTrashItems((prev) => prev.filter((item) => item.id !== id));
-            try {
-                const res = await fetch(`/api/trash/${id}/restore`, { method: "POST" });
-                if (!res.ok) throw new Error("Failed to restore item");
-            } catch (err) {
-                console.error("Error restoring item:", err);
-                await fetchTrash();
+    const restoreMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`/api/trash/${id}/restore`, { method: "POST" });
+            if (!res.ok) throw new Error("Failed to restore item");
+            return id;
+        },
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            // Optimistically restore (set deleted_at to null)
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.map((item) => (item.id === id ? { ...item, deleted_at: null } : item))
+            );
+
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [fetchTrash]
-    );
+    });
 
-    const bulkRestore = useCallback(
-        async (ids: string[]) => {
-            setTrashItems((prev) => prev.filter((item) => !ids.includes(item.id)));
-            try {
-                const res = await fetch("/api/trash/bulk/restore", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ids }),
-                });
-                if (!res.ok) throw new Error("Failed to bulk restore");
-            } catch (err) {
-                console.error("Error bulk restoring items:", err);
-                await fetchTrash();
+    const bulkRestoreMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            const res = await fetch("/api/trash/bulk/restore", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids }),
+            });
+            if (!res.ok) throw new Error("Failed to bulk restore");
+            return ids;
+        },
+        onMutate: async (ids) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.map((item) => (ids.includes(item.id) ? { ...item, deleted_at: null } : item))
+            );
+
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [fetchTrash]
-    );
+    });
 
-    const deleteForever = useCallback(
-        async (id: string) => {
-            setTrashItems((prev) => prev.filter((item) => item.id !== id));
-            try {
-                const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
-                if (!res.ok) throw new Error("Failed to delete item");
-            } catch (err) {
-                console.error("Error deleting item:", err);
-                await fetchTrash();
+    const deleteForeverMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete item forever");
+            return id;
+        },
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.filter((item) => item.id !== id)
+            );
+
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [fetchTrash]
-    );
+    });
 
-    const bulkDeleteForever = useCallback(
-        async (ids: string[]) => {
-            setTrashItems((prev) => prev.filter((item) => !ids.includes(item.id)));
-            try {
-                const res = await fetch("/api/trash", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ids }),
-                });
-                if (!res.ok) throw new Error("Failed to bulk delete");
-            } catch (err) {
-                console.error("Error bulk deleting items:", err);
-                await fetchTrash();
+    const bulkDeleteForeverMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            const res = await fetch("/api/trash", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids }),
+            });
+            if (!res.ok) throw new Error("Failed to bulk delete");
+            return ids;
+        },
+        onMutate: async (ids) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.filter((item) => !ids.includes(item.id))
+            );
+
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [fetchTrash]
-    );
+    });
 
-    const emptyTrash = useCallback(async () => {
-        const previous = [...trashItems];
-        setTrashItems([]);
-        try {
+    const emptyTrashMutation = useMutation({
+        mutationFn: async () => {
             const res = await fetch("/api/trash", { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to empty trash");
-        } catch (err) {
-            console.error("Error emptying trash:", err);
-            setTrashItems(previous);
-        }
-    }, [trashItems]);
+        },
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            // Remove all items that have deleted_at !== null
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.filter((item) => item.deleted_at === null)
+            );
+
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
+            }
+        },
+    });
+
 
     return {
         trashItems,
         trashCount: trashItems.length,
         isLoading,
-        restoreItem,
-        bulkRestore,
-        deleteForever,
-        bulkDeleteForever,
-        emptyTrash,
-        refetch: fetchTrash,
+        restoreItem: async (id) => { await restoreMutation.mutateAsync(id); },
+        bulkRestore: async (ids) => { await bulkRestoreMutation.mutateAsync(ids); },
+        deleteForever: async (id) => { await deleteForeverMutation.mutateAsync(id); },
+        bulkDeleteForever: async (ids) => { await bulkDeleteForeverMutation.mutateAsync(ids); },
+        emptyTrash: async () => { await emptyTrashMutation.mutateAsync(); },
+        refetch: async () => { await refetch(); },
     };
 }

@@ -156,12 +156,6 @@ export function DataTable<TValue>({
         setRowSelection({});
     };
 
-    // Count active filters for the badge
-    const activeFilterCount =
-        (activeStatus !== "all" ? 1 : 0) +
-        (showFavoritesOnly ? 1 : 0) +
-        (domainFilter ? 1 : 0);
-
     const isTrash = meta.isTrashView;
 
     return (

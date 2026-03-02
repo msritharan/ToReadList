@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LinkItem } from "@/types";
 
 export type LinkStatus = "all" | "unread" | "read" | "skipped";
@@ -41,6 +42,8 @@ export interface LinksQueryResult {
 }
 
 export function useLinksQuery(): LinksQueryResult {
+    const queryClient = useQueryClient();
+
     const [queryState, setQueryState] = useState<LinksQueryState>({
         page: 1,
         limit: 25,
@@ -52,50 +55,84 @@ export function useLinksQuery(): LinksQueryResult {
         domainFilter: "",
     });
 
-    const [links, setLinks] = useState<LinkItem[]>([]);
-    const [total, setTotal] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [isLoading, setIsLoading] = useState(true);
+    // 1. Fetch ALL links once (up to 2000)
+    const { data: allLinks = [], isLoading: isFetchingLinks } = useQuery<LinkItem[]>({
+        queryKey: ["links"],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            params.set("limit", "2000"); // Fetch all
+            // IMPORTANT: Remove filters here so we get everything
 
-    // Debounce ref for search
-    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // Track the search input separately so we can debounce it
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-
-    const fetchLinks = useCallback(
-        async (state: LinksQueryState, resolvedSearch: string) => {
-            setIsLoading(true);
-            try {
-                const params = new URLSearchParams();
-                params.set("page", String(state.page));
-                params.set("limit", String(state.limit));
-                if (state.status !== "all") params.set("status", state.status);
-                if (state.isFavorite) params.set("is_favorite", "true");
-                if (resolvedSearch.trim()) params.set("search", resolvedSearch.trim());
-                params.set("sort_by", state.sortBy);
-                params.set("sort_order", state.sortOrder);
-                if (state.domainFilter.trim()) params.set("domain", state.domainFilter.trim());
-
-                const res = await fetch(`/api/links?${params.toString()}`);
-                if (!res.ok) throw new Error("Failed to fetch links");
-
-                const json = await res.json();
-                setLinks(json.data ?? []);
-                setTotal(json.total ?? 0);
-                setTotalPages(json.totalPages ?? 1);
-            } catch (err) {
-                console.error("Error fetching links:", err);
-            } finally {
-                setIsLoading(false);
-            }
+            const res = await fetch(`/api/links?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch links");
+            const json = await res.json();
+            return json.data ?? [];
         },
-        []
-    );
+    });
 
-    // Re-fetch whenever queryState or debouncedSearch changes
-    useEffect(() => {
-        fetchLinks(queryState, debouncedSearch);
-    }, [queryState, debouncedSearch, fetchLinks]);
+    // 2. Synchronously derive paginated/filtered data from the cache
+    const { links: currentLinks, total, totalPages } = useMemo(() => {
+        // First, explicitly filter out items that are in the trash
+        let filtered = allLinks.filter((l) => l.deleted_at === null);
+
+        // Apply Status Filter
+        if (queryState.status !== "all") {
+            filtered = filtered.filter((l) => l.status === queryState.status);
+        }
+
+        // Apply Favorites Filter
+        if (queryState.isFavorite) {
+            filtered = filtered.filter((l) => l.is_favorite === true);
+        }
+
+        // Apply Domain Filter
+        if (queryState.domainFilter.trim()) {
+            filtered = filtered.filter((l) => l.domain === queryState.domainFilter.trim());
+        }
+
+        // Apply Search Filter
+        if (queryState.search.trim()) {
+            const lowerSearch = queryState.search.toLowerCase();
+            filtered = filtered.filter(
+                (l) =>
+                    (l.title && l.title.toLowerCase().includes(lowerSearch)) ||
+                    (l.url && l.url.toLowerCase().includes(lowerSearch)) ||
+                    (l.domain && l.domain.toLowerCase().includes(lowerSearch))
+            );
+        }
+
+        // Sort
+        filtered.sort((a, b) => {
+            if (queryState.sortBy === "created_at") {
+                const dateA = new Date(a.created_at || 0).getTime();
+                const dateB = new Date(b.created_at || 0).getTime();
+                return queryState.sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+            }
+            return 0;
+        });
+
+        const totalItems = filtered.length;
+        const totalPgs = Math.max(1, Math.ceil(totalItems / queryState.limit));
+
+        // Ensure page is within bounds if filter drastically reduces results
+        const safePage = Math.min(queryState.page, totalPgs);
+        if (safePage !== queryState.page && safePage > 0) {
+            // It's considered bad practice to setState in useMemo, but we handle safePage slice here.
+            // The actual page state will catch up next explicit setter.
+        }
+
+        // Paginate
+        const start = (Math.min(queryState.page, totalPgs) - 1) * queryState.limit;
+        const end = start + queryState.limit;
+        const paginated = filtered.slice(start, end);
+
+        return {
+            links: paginated,
+            total: totalItems,
+            totalPages: totalPgs,
+        };
+    }, [allLinks, queryState]);
+
 
     // --- State setters ---
     const setPage = useCallback((page: number) => {
@@ -115,11 +152,8 @@ export function useLinksQuery(): LinksQueryResult {
     }, []);
 
     const setSearch = useCallback((search: string) => {
+        // No longer tracking debounced state here since filtering is instant locally
         setQueryState((prev) => ({ ...prev, search, page: 1 }));
-        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-        searchDebounceRef.current = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 300);
     }, []);
 
     const setSortOrder = useCallback((sortOrder: SortOrder) => {
@@ -138,116 +172,141 @@ export function useLinksQuery(): LinksQueryResult {
         setQueryState((prev) => ({ ...prev, domainFilter, page: 1 }));
     }, []);
 
+
     // --- Mutations ---
-    const addLink = useCallback(
-        async (newLink: Omit<LinkItem, "id" | "created_at">) => {
-            try {
-                const res = await fetch("/api/links", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(newLink),
-                });
-                if (!res.ok) throw new Error("Failed to add link");
-                await fetchLinks(queryState, debouncedSearch);
-            } catch (err) {
-                console.error("Error adding link:", err);
-            }
-        },
-        [queryState, debouncedSearch, fetchLinks]
-    );
 
-    const updateLink = useCallback(
-        async (id: string, updates: Partial<LinkItem>) => {
-            const previousLinks = [...links];
-            setLinks((prev) =>
-                prev.map((link) => (link.id === id ? { ...link, ...updates } : link))
+    const addMutation = useMutation({
+        mutationFn: async (newLink: Omit<LinkItem, "id" | "created_at">) => {
+            const res = await fetch("/api/links", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newLink),
+            });
+            if (!res.ok) throw new Error("Failed to add link");
+            return res.json();
+        },
+        onSuccess: (addedLink) => {
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) => {
+                return [(addedLink as LinkItem), ...(old || [])];
+            });
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, updates }: { id: string; updates: Partial<LinkItem> }) => {
+            const res = await fetch(`/api/links/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updates),
+            });
+            if (!res.ok) throw new Error("Failed to update link");
+            return { id, updates };
+        },
+        onMutate: async ({ id, updates }) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.map((link) => (link.id === id ? { ...link, ...updates } : link))
             );
-            try {
-                const res = await fetch(`/api/links/${id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(updates),
-                });
-                if (!res.ok) throw new Error("Failed to update link");
-            } catch (err) {
-                console.error("Error updating link:", err);
-                setLinks(previousLinks);
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [links]
-    );
+    });
 
-    const bulkUpdateLinks = useCallback(
-        async (ids: string[], updates: Partial<LinkItem>) => {
-            const previousLinks = [...links];
-            setLinks((prev) =>
-                prev.map((link) => (ids.includes(link.id) ? { ...link, ...updates } : link))
+    const bulkUpdateMutation = useMutation({
+        mutationFn: async ({ ids, updates }: { ids: string[]; updates: Partial<LinkItem> }) => {
+            const res = await fetch("/api/links/bulk", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids, updates }),
+            });
+            if (!res.ok) throw new Error("Failed to bulk update links");
+            return { ids, updates };
+        },
+        onMutate: async ({ ids, updates }) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.map((link) => (ids.includes(link.id) ? { ...link, ...updates } : link))
             );
-            try {
-                const res = await fetch("/api/links/bulk", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ids, updates }),
-                });
-                if (!res.ok) throw new Error("Failed to bulk update links");
-            } catch (err) {
-                console.error("Error bulk updating links:", err);
-                setLinks(previousLinks);
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [links]
-    );
+    });
 
-    const deleteLink = useCallback(
-        async (id: string) => {
-            // Optimistically remove from list
-            setLinks((prev) => prev.filter((link) => link.id !== id));
-            setTotal((prev) => Math.max(0, prev - 1));
-            try {
-                const res = await fetch(`/api/links/${id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ deleted_at: new Date().toISOString() }),
-                });
-                if (!res.ok) throw new Error("Failed to delete link");
-            } catch (err) {
-                console.error("Error deleting link:", err);
-                // Re-fetch to restore correct state
-                await fetchLinks(queryState, debouncedSearch);
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`/api/links/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deleted_at: new Date().toISOString() }),
+            });
+            if (!res.ok) throw new Error("Failed to delete link");
+            return id;
+        },
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.filter((link) => link.id !== id)
+            );
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [queryState, debouncedSearch, fetchLinks]
-    );
+        onSuccess: () => {
+            // Invalidate trash to trigger a refetch there since we added an item
+            queryClient.invalidateQueries({ queryKey: ["trash"] });
+        }
+    });
 
-    const bulkDeleteLinks = useCallback(
-        async (ids: string[]) => {
-            // Optimistically remove from list
-            setLinks((prev) => prev.filter((link) => !ids.includes(link.id)));
-            setTotal((prev) => Math.max(0, prev - ids.length));
-            try {
-                const res = await fetch("/api/links/bulk", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ids,
-                        updates: { deleted_at: new Date().toISOString() },
-                    }),
-                });
-                if (!res.ok) throw new Error("Failed to bulk delete links");
-            } catch (err) {
-                console.error("Error bulk deleting links:", err);
-                // Re-fetch to restore correct state
-                await fetchLinks(queryState, debouncedSearch);
+    const bulkDeleteMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            const res = await fetch("/api/links/bulk", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ids,
+                    updates: { deleted_at: new Date().toISOString() },
+                }),
+            });
+            if (!res.ok) throw new Error("Failed to bulk delete links");
+            return ids;
+        },
+        onMutate: async (ids) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) =>
+                old?.filter((link) => !ids.includes(link.id))
+            );
+            return { previousLinks };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
             }
         },
-        [queryState, debouncedSearch, fetchLinks]
-    );
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["trash"] });
+        }
+    });
 
     return {
-        links,
+        links: currentLinks,
         total,
         totalPages,
-        isLoading,
+        isLoading: isFetchingLinks,
         queryState,
         setPage,
         setLimit,
@@ -257,10 +316,10 @@ export function useLinksQuery(): LinksQueryResult {
         setSortOrder,
         toggleSortOrder,
         setDomainFilter,
-        addLink,
-        updateLink,
-        bulkUpdateLinks,
-        deleteLink,
-        bulkDeleteLinks,
+        addLink: async (link) => { await addMutation.mutateAsync(link); },
+        updateLink: async (id, updates) => { await updateMutation.mutateAsync({ id, updates }); },
+        bulkUpdateLinks: async (ids, updates) => { await bulkUpdateMutation.mutateAsync({ ids, updates }); },
+        deleteLink: async (id) => { await deleteMutation.mutateAsync(id); },
+        bulkDeleteLinks: async (ids) => { await bulkDeleteMutation.mutateAsync(ids); },
     };
 }

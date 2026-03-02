@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const sort_order = searchParams.get("sort_order") ?? "desc";
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(
-        200,
+        2000,
         Math.max(1, parseInt(searchParams.get("limit") ?? "25", 10))
     );
     const offset = (page - 1) * limit;
@@ -31,12 +31,11 @@ export async function GET(request: NextRequest) {
     const resolvedSortBy = allowedSortColumns.includes(sort_by) ? sort_by : "created_at";
     const ascending = sort_order === "asc";
 
-    // Build the filtered query
+    // Build the query (fetching ALL links including soft-deleted ones)
     let baseQuery = supabase
         .from("links")
         .select("*", { count: "exact" })
-        .eq("user_id", user.id)
-        .is("deleted_at", null);
+        .eq("user_id", user.id);
 
     if (status && status !== "all") {
         baseQuery = baseQuery.eq("status", status);

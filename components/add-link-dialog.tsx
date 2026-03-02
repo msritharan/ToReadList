@@ -52,11 +52,17 @@ export function AddLinkDialog({ onAddLink, trigger }: AddLinkDialogProps) {
     // Auto-generate a title placeholder from the URL when no custom title is provided
     useEffect(() => {
         if (url && urlValid && !title) {
-            setIsExtracting(true);
-            // Simulate a brief extraction delay for UX polish
-            const timer = setTimeout(() => {
+            // Push update to next tick to avoid synchronous update in render
+            const initialTimer = setTimeout(() => setIsExtracting(true), 0);
+            const extractTimer = setTimeout(() => {
                 setIsExtracting(false);
             }, 600);
+            return () => {
+                clearTimeout(initialTimer);
+                clearTimeout(extractTimer);
+            };
+        } else {
+            const timer = setTimeout(() => setIsExtracting(false), 0);
             return () => clearTimeout(timer);
         }
     }, [url, urlValid, title]);

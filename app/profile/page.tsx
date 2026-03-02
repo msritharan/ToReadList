@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Mail, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { H3, Large, Small, Muted } from "@/components/ui/typography";
+import { Large, Small } from "@/components/ui/typography";
 
 interface UserProfile {
     name: string;
