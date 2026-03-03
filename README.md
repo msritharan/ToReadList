@@ -1,88 +1,130 @@
 # ToReadList
 
-> A personal read-later system: save any link from Telegram (or anywhere), auto-extract metadata, and manage your reading queue through a clean web UI.
-
-## Getting Started
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### Environment Variables
-
-Copy `.env.local.example` to `.env.local` and fill in:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-## Tech Stack
-
-- **Next.js 16** (App Router) + TypeScript
-- **Supabase** (Postgres, Auth, RLS)
-- **Tailwind CSS** + **shadcn/ui**
-- **TanStack Table** for data display
-
-## Current Features
-
-- Google OAuth login
-- Single-page dashboard ("Collection") with all links
-- Inline filter pills: All / Unread / Read / Skipped + Favorites toggle
-- Status tags with colored badges
-- Context-aware row actions (Mark Read, Skip, Favorite, Delete)
-- Add Link dialog with live metadata preview
-- Top navbar with user avatar dropdown (Profile, Settings, Sign Out)
+> **Save it now. Read it later.**
+>
+> A personal read-later system that lets you save links from anywhere — your phone's share menu, a Telegram bot, or a clean web UI — and manage your reading queue in one beautifully organized place.
 
 ---
 
-## Upcoming: Onboarding Flow & Telegram Verification
+## What Is ToReadList?
 
-### Overview
+ToReadList is a self-hosted reading list manager built for people who constantly stumble upon interesting articles but never have the time to read them *right now*. Instead of losing links in browser tabs or chat threads, ToReadList gives you a single, distraction-free space to collect, organize, and work through your reading backlog.
 
-A guided onboarding for new users to connect ingestion channels. Telegram is the first channel, with more planned (Email, Browser Extension).
+### How It Works
 
-### Verification Flow (Zero Cost)
+| Channel | How to Save a Link |
+|---|---|
+| **iOS / Android** | Install the PWA, then use your phone's native **Share** menu → "ToReadList" to save any link instantly. |
+| **Telegram Bot** | Send (or forward) any URL to the bot. It's saved to your list automatically. |
+| **Web UI** | Click **Add Link** on the dashboard, paste a URL, and metadata is fetched for you in real time. |
 
-Uses a simple `/start` flow — the user messages the bot and their Telegram chat ID is automatically linked to their account.
+Every link you save gets its **title, description, and favicon** auto-extracted so your list is always rich and scannable without any extra effort.
 
-```
-1. User navigates to Settings → Channels → Connect Telegram
-2. App shows the bot username and a deep link (t.me/YourBot?start=<token>)
-3. User taps the link → opens Telegram → sends /start
-4. Bot receives the chat ID + start token, links to user's account
-5. Bot replies "✅ Connected!" (free)
-6. Web app detects connection and updates the UI
-```
+---
 
-### Required Changes
+## Features
 
-#### Database Migration
-Add to `profiles` table:
-- `telegram_verified` (boolean, default false)
-- `telegram_link_token` (text, nullable)
-- `telegram_link_expires_at` (timestamptz, nullable)
+- **Google OAuth** — Sign in with your Google account. No passwords to manage.
+- **PWA with Share Target** — Install on your home screen (iOS & Android) and save links via the native share menu.
+- **Telegram Integration** — Connect a Telegram bot and save links by simply messaging them. Scan a QR code or tap a link to connect.
+- **Live Metadata Extraction** — Titles, descriptions, and favicons are fetched automatically when you add a link.
+- **Smart Filters** — Filter by status (Unread / Read / Skipped), favorites, domain, or tags.
+- **Tags** — Organize links with custom tags. Autocomplete makes it fast.
+- **Bulk Actions** — Select multiple links and mark as read, delete, or move to trash in one click.
+- **Trash & Restore** — Deleted links go to trash first. Restore them or permanently delete.
+- **Favorites** — Star your most important links for quick access.
+- **Dark & Light Mode** — Automatic theme switching with carefully tuned palettes for both.
+- **Responsive Design** — Card-based mobile layout with sort & filter dialogs optimized for small screens.
 
-#### New API Routes
-| Route | Purpose |
-|-------|---------|
-| `POST /api/verify/start` | Generate link token, store on profile |
-| `POST /api/verify/check` | Poll verification status |
-| `POST /api/telegram/webhook` | Receive messages, verify tokens, handle links |
+---
 
-#### New Pages
-- `/onboarding` — Step-by-step wizard (Welcome → Connect Telegram → Done)
-- Skip option available at every step
+## Tech Stack
 
-#### New Environment Variables
-```
-TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
-TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
-```
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router) + TypeScript |
+| Database & Auth | [Supabase](https://supabase.com/) (Postgres, Auth, Row-Level Security) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| Data Table | [TanStack Table](https://tanstack.com/table) |
+| Data Fetching | [TanStack Query](https://tanstack.com/query) |
+| PWA | [@ducanh2912/next-pwa](https://github.com/nicedocs/next-pwa) with custom service worker |
+| Bot | Telegram Bot API (webhook-based) |
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- A Telegram bot created via @BotFather (free, instant)
-- Webhook URL configured via Telegram Bot API
+
+- **Node.js** ≥ 18
+- A **Supabase** project ([create one free](https://supabase.com/dashboard))
+- *Optional:* A **Telegram bot** created via [@BotFather](https://t.me/BotFather)
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/your-username/toreadlist.git
+cd toreadlist
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Copy the example file and fill in your credentials:
+
+```bash
+cp .env.local.example .env.local
+```
+
+| Variable | Where to Find It |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API → `anon` `public` key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → `service_role` key (keep secret!) |
+| `TELEGRAM_BOT_TOKEN` | Message [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token |
+| `TELEGRAM_BOT_USERNAME` | The bot username you chose (without the `@`) |
+| `TELEGRAM_WEBHOOK_SECRET` | Generate with `openssl rand -hex 32` |
+
+### 3. Run the Dev Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and sign in with Google.
+
+### 4. Set Up Telegram (Optional)
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) and copy the token into `.env.local`.
+2. Deploy the app (or use a tunnel like [ngrok](https://ngrok.com/)) so the webhook endpoint is publicly reachable.
+3. Register the webhook with Telegram:
+   ```bash
+   curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
+     -d "url=https://your-domain.com/api/telegram/webhook" \
+     -d "secret_token=<YOUR_WEBHOOK_SECRET>"
+   ```
+4. In the app, go to **Settings → Channels → Connect Telegram** and scan the QR code or tap the link from your phone.
+
+---
+
+## Project Structure
+
+```
+app/
+├── api/            # API routes (links CRUD, trash, metadata, telegram, verify)
+├── dashboard/      # Main reading list view
+├── settings/       # User settings & channel connections
+├── trash/          # Trash management
+├── add/            # PWA share-target handler
+└── page.tsx        # Landing page
+components/         # Reusable UI components (data table, dialogs, nav)
+lib/                # Supabase clients, utilities
+public/             # PWA manifest, service worker, icons
+supabase/           # Database migrations
+```
+
+---
+
+## License
+
+This project is private and not currently open-sourced.
