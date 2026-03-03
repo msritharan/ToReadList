@@ -57,25 +57,25 @@ function LoginContent() {
 
                 {/* Typography */}
                 <div className="space-y-6 mb-14 w-full flex flex-col items-center">
-                    <H1 className="text-5xl sm:text-7xl lg:text-8xl pb-2 text-center text-foreground font-black tracking-tighter leading-[1.1]">
+                    <H1 className="text-4xl sm:text-7xl lg:text-8xl pb-2 text-center text-foreground font-black tracking-tighter leading-[1.1]">
                         ToReadList
                     </H1>
-                    <p className="text-3xl sm:text-4xl text-center font-bold tracking-tight text-foreground/90">
+                    <p className="text-2xl sm:text-4xl text-center font-bold tracking-tight text-foreground/90">
                         Save it now. Read it later.
                     </p>
-                    <Lead className="text-xl sm:text-2xl max-w-2xl text-center leading-relaxed font-light text-muted-foreground pb-2">
+                    <Lead className="text-lg sm:text-2xl max-w-2xl text-center leading-relaxed font-light text-muted-foreground pb-2 px-4">
                         Easily save articles using the native share menu on your iPhone or Android device, or by sending a link to our Telegram bot. Get back to your reading in a beautifully clean, distraction-free space.
                     </Lead>
                 </div>
 
                 {/* Action Area */}
-                <div className="flex flex-col items-center gap-8 w-full">
+                <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
                     <Button
                         onClick={handleGoogleLogin}
                         size="lg"
-                        className="h-16 px-10 rounded-full bg-foreground hover:bg-foreground/90 text-background font-semibold shadow-[0_0_40px_rgba(0,0,0,0.1)] hover:shadow-[0_0_80px_rgba(0,0,0,0.15)] transition-all duration-500 gap-4 group text-xl hover:-translate-y-1"
+                        className="h-14 sm:h-16 px-6 sm:px-10 rounded-full bg-foreground hover:bg-foreground/90 text-background font-semibold shadow-[0_0_40px_rgba(0,0,0,0.1)] hover:shadow-[0_0_80px_rgba(0,0,0,0.15)] transition-all duration-500 gap-3 sm:gap-4 group text-base sm:text-xl hover:-translate-y-1"
                     >
-                        <svg className="h-7 w-7 transition-transform group-hover:scale-110 duration-500" viewBox="0 0 24 24">
+                        <svg className="h-6 w-6 sm:h-7 sm:w-7 transition-transform group-hover:scale-110 duration-500" viewBox="0 0 24 24">
                             <path
                                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                                 fill="#4285F4"
@@ -95,7 +95,7 @@ function LoginContent() {
                         </svg>
                         Start for free with Google
                     </Button>
-                    <p className="text-sm font-medium text-muted-foreground/60 tracking-wide uppercase">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground/60 tracking-wide uppercase">
                         Free forever for beta users
                     </p>
                 </div>

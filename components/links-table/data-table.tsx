@@ -187,11 +187,11 @@ export function DataTable<TValue>({
         <div className="space-y-4">
             {/* Bulk Action Bar */}
             {selectedCount > 0 && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                    <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                <div className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                    <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap self-start sm:self-auto">
                         {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
                     </span>
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className="flex items-center gap-1 sm:gap-2 sm:ml-auto overflow-x-auto w-full sm:w-auto scrollbar-hide pb-1 sm:pb-0">
                         {isTrash ? (
                             <>
                                 <Button
@@ -201,10 +201,11 @@ export function DataTable<TValue>({
                                         meta.onBulkRestore?.(selectedRows);
                                         setRowSelection({});
                                     }}
-                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 px-2 sm:px-3"
+                                    title="Restore Selected"
                                 >
-                                    <Undo2 className="h-4 w-4 mr-1.5" />
-                                    Restore Selected
+                                    <Undo2 className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Restore Selected</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -213,10 +214,11 @@ export function DataTable<TValue>({
                                         meta.onBulkDeleteForever?.(selectedRows);
                                         setRowSelection({});
                                     }}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 sm:px-3"
+                                    title="Delete Forever"
                                 >
-                                    <Trash2 className="h-4 w-4 mr-1.5" />
-                                    Delete Forever
+                                    <Trash2 className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Delete Forever</span>
                                 </Button>
                             </>
                         ) : (
@@ -225,34 +227,37 @@ export function DataTable<TValue>({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleBulkUpdate({ status: "read" })}
-                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 px-2 sm:px-3"
+                                    title="Mark as Read"
                                 >
-                                    <Check className="h-4 w-4 mr-1.5" />
-                                    Mark as Read
+                                    <Check className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Mark as Read</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleBulkUpdate({ status: "unread" })}
-                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 px-2 sm:px-3"
+                                    title="Mark as Unread"
                                 >
-                                    <BookOpen className="h-4 w-4 mr-1.5" />
-                                    Mark as Unread
+                                    <BookOpen className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Mark as Unread</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleBulkUpdate({ status: "skipped" })}
-                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-500/10"
+                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 px-2 sm:px-3"
+                                    title="Skip"
                                 >
-                                    <SkipForward className="h-4 w-4 mr-1.5" />
-                                    Skip
+                                    <SkipForward className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Skip</span>
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm">
-                                            <MoreHorizontal className="h-4 w-4 mr-1.5" />
-                                            More
+                                        <Button variant="ghost" size="sm" className="px-2 sm:px-3" title="More">
+                                            <MoreHorizontal className="h-4 w-4 sm:mr-1.5" />
+                                            <span className="hidden sm:inline">More</span>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-[180px] bg-popover">
