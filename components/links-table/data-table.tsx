@@ -350,30 +350,6 @@ export function DataTable<TValue>({
 
                 {/* Right: Actions */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                    {/* Mobile Select All */}
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        className="md:hidden flex items-center gap-2 bg-background shadow-sm h-8 px-2.5 border border-border/60 rounded-md cursor-pointer hover:bg-accent transition-colors select-none"
-                        onClick={() => {
-                            const isAllSelected = table.getIsAllPageRowsSelected();
-                            table.toggleAllPageRowsSelected(!isAllSelected);
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                const isAllSelected = table.getIsAllPageRowsSelected();
-                                table.toggleAllPageRowsSelected(!isAllSelected);
-                            }
-                        }}
-                    >
-                        <Checkbox
-                            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-                            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                            className="h-4 w-4 pointer-events-none"
-                        />
-                        <span className="text-[11px] font-medium whitespace-nowrap">Select All</span>
-                    </div>
 
                     {/* Mobile Sort & Filter */}
                     <Dialog>
