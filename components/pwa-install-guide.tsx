@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Monitor, Globe, SmartphoneIcon, Apple } from "lucide-react";
+import { Monitor, Globe, SmartphoneIcon, Apple, ChevronDown } from "lucide-react";
 import { Small } from "@/components/ui/typography";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PWAInstallGuideProps {
     isOpen: boolean;
@@ -63,8 +69,8 @@ export function PWAInstallGuide({ isOpen }: PWAInstallGuideProps) {
 
     return (
         <div className="mt-3 pl-[52px] space-y-3 animate-in slide-in-from-bottom-2 duration-200">
-            {/* Device selector — horizontal */}
-            <div className="flex gap-2">
+            {/* Device selector - Desktop */}
+            <div className="hidden sm:flex flex-row gap-2">
                 {devices.map((device) => {
                     const Icon = device.icon;
                     const isSelected = expandedDevice === device.id;
@@ -84,6 +90,42 @@ export function PWAInstallGuide({ isOpen }: PWAInstallGuideProps) {
                         </button>
                     );
                 })}
+            </div>
+
+            {/* Device selector - Mobile Dropdown */}
+            <div className="sm:hidden block">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="flex w-full items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-border/50 text-sm font-medium text-foreground hover:border-border hover:bg-muted/40 transition-all">
+                            <span className="flex items-center gap-2">
+                                {selected ? (
+                                    <>
+                                        <selected.icon className="h-4 w-4 flex-shrink-0" />
+                                        {selected.title}
+                                    </>
+                                ) : (
+                                    "Select device instructions..."
+                                )}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-[200px]" align="start">
+                        {devices.map((device) => {
+                            const Icon = device.icon;
+                            return (
+                                <DropdownMenuItem
+                                    key={device.id}
+                                    onClick={() => setExpandedDevice(device.id)}
+                                    className="gap-2 cursor-pointer py-2"
+                                >
+                                    <Icon className="h-4 w-4 text-muted-foreground" />
+                                    <span>{device.title}</span>
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             {/* Instructions for selected device */}

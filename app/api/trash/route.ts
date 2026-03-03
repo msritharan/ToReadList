@@ -39,12 +39,14 @@ export async function DELETE(request: NextRequest) {
 
     let idsToDelete: string[] | undefined;
     try {
-        const body = await request.json();
+        const text = await request.text();
+        console.log("body text:", text);
+        const body = text ? JSON.parse(text) : null;
         if (body && Array.isArray(body.ids) && body.ids.length > 0) {
             idsToDelete = body.ids;
         }
-    } catch {
-        // No body provided, assume "empty all trash"
+    } catch (e) {
+        console.log("JSON parse error:", e);
     }
 
     let query = supabase
@@ -58,6 +60,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { error } = await query;
+
+    console.log("Supabase delete error:", error);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

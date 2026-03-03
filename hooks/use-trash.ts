@@ -97,7 +97,11 @@ export function useTrash(): UseTrashResult {
     const deleteForeverMutation = useMutation({
         mutationFn: async (id: string) => {
             const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Failed to delete item forever");
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("deleteForever error response:", res.status, res.statusText, text);
+                throw new Error("Failed to delete item forever");
+            }
             return id;
         },
         onMutate: async (id) => {
@@ -124,7 +128,11 @@ export function useTrash(): UseTrashResult {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ids }),
             });
-            if (!res.ok) throw new Error("Failed to bulk delete");
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("bulkDelete error response:", res.status, res.statusText, text);
+                throw new Error("Failed to bulk delete");
+            }
             return ids;
         },
         onMutate: async (ids) => {
@@ -147,7 +155,11 @@ export function useTrash(): UseTrashResult {
     const emptyTrashMutation = useMutation({
         mutationFn: async () => {
             const res = await fetch("/api/trash", { method: "DELETE" });
-            if (!res.ok) throw new Error("Failed to empty trash");
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("emptyTrash error response:", res.status, res.statusText, text);
+                throw new Error("Failed to empty trash");
+            }
         },
         onMutate: async () => {
             await queryClient.cancelQueries({ queryKey: ["links"] });

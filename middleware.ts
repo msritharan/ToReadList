@@ -39,6 +39,7 @@ export async function middleware(request: NextRequest) {
         request.nextUrl.pathname === "/" ||
         request.nextUrl.pathname.startsWith("/auth/callback") ||
         request.nextUrl.pathname.startsWith("/api/telegram/webhook") ||
+        request.nextUrl.pathname.startsWith("/api/trash") ||
         request.nextUrl.pathname.startsWith("/add");
 
     if (!user && !isAuthRoute) {

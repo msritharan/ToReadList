@@ -9,4 +9,4 @@ alter table public.links add column if not exists tags text[] default '{}';
 create index if not exists idx_links_tags on links using gin(tags);
 
 -- 3. Add pending tag state to profiles (for Telegram conversation)
-alter table public.profiles add column if not exists pending_tag_link_id uuid references public.links(id);
+alter table public.profiles add column if not exists pending_tag_link_id uuid references public.links(id) on delete set null;
