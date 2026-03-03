@@ -221,16 +221,13 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
                             htmlFor="tags"
                             className="text-sm font-medium text-foreground"
                         >
-                            Tags{" "}
-                            <span className="text-muted-foreground font-normal">
-                                (comma separated)
-                            </span>
+                            Tags
                         </label>
                         <TagInput
                             availableTags={availableTags}
                             value={tags}
                             onChange={setTags}
-                            placeholder="work, tech, reading"
+                            placeholder="Add tags..."
                         />
                     </div>
 

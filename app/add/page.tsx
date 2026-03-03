@@ -39,12 +39,22 @@ export default async function AddPage({
   const sharedUrl = params.url || params.text || "";
   const sharedTitle = params.title || "";
 
+  // Fetch all user tags for the tag selector
+  const { data: links } = await supabase
+    .from("links")
+    .select("tags")
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
+
+  const availableTags = Array.from(new Set((links || []).flatMap((l) => l.tags || []))).sort();
+
   // Metadata is fetched asynchronously on the client side
   // to avoid blocking the initial page render (1-5s savings)
   return (
     <AddLinkClient
       url={sharedUrl}
       title={sharedTitle}
+      availableTags={availableTags}
     />
   );
 }

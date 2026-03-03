@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LinkItem } from "@/types";
+import { TagInput } from "@/components/tag-input";
 
 async function addLink(link: Omit<LinkItem, "id" | "created_at">) {
   const res = await fetch("/api/links", {
@@ -40,9 +41,10 @@ interface AddLinkClientProps {
   url: string;
   title?: string;
   description?: string;
+  availableTags?: string[];
 }
 
-export function AddLinkClient({ url: initialUrl, title: initialTitle = "", description: initialDescription = "" }: AddLinkClientProps) {
+export function AddLinkClient({ url: initialUrl, title: initialTitle = "", description: initialDescription = "", availableTags = [] }: AddLinkClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -123,6 +125,7 @@ export function AddLinkClient({ url: initialUrl, title: initialTitle = "", descr
       status: "unread",
       is_favorite: false,
       tags: parsedTags,
+      source: "pwa",
     });
   };
 
@@ -218,15 +221,13 @@ export function AddLinkClient({ url: initialUrl, title: initialTitle = "", descr
         {/* Tags */}
         <div className="space-y-1.5">
           <label htmlFor="tags" className="text-sm font-medium text-foreground">
-            Tags{" "}
-            <span className="text-muted-foreground font-normal">(comma separated)</span>
+            Tags
           </label>
-          <Input
-            id="tags"
-            placeholder="work, tech, reading"
+          <TagInput
+            availableTags={availableTags}
             value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
+            onChange={setTags}
+            placeholder="Add tags..."
           />
         </div>
 

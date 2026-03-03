@@ -25,7 +25,10 @@ import {
     ArrowUpFromLine,
     ArrowDownToLine,
     RotateCcw,
+    ListChecks,
 } from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
     Dialog,
@@ -205,7 +208,7 @@ export function DataTable<TValue>({
                                     title="Restore Selected"
                                 >
                                     <Undo2 className="h-4 w-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Restore Selected</span>
+                                    <span className="text-xs sm:text-sm">Restore</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -218,7 +221,7 @@ export function DataTable<TValue>({
                                     title="Delete Forever"
                                 >
                                     <Trash2 className="h-4 w-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Delete Forever</span>
+                                    <span className="text-xs sm:text-sm">Delete</span>
                                 </Button>
                             </>
                         ) : (
@@ -231,17 +234,18 @@ export function DataTable<TValue>({
                                     title="Mark as Read"
                                 >
                                     <Check className="h-4 w-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Mark as Read</span>
+                                    <span className="text-xs sm:text-sm">Read</span>
                                 </Button>
+                                {/* Unread moved to dropdown on mobile */}
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleBulkUpdate({ status: "unread" })}
-                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 px-2 sm:px-3"
+                                    className="hidden sm:flex text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 px-2 sm:px-3"
                                     title="Mark as Unread"
                                 >
                                     <BookOpen className="h-4 w-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Mark as Unread</span>
+                                    <span className="text-xs sm:text-sm">Unread</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -251,16 +255,23 @@ export function DataTable<TValue>({
                                     title="Skip"
                                 >
                                     <SkipForward className="h-4 w-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Skip</span>
+                                    <span className="text-xs sm:text-sm">Skip</span>
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="px-2 sm:px-3" title="More">
                                             <MoreHorizontal className="h-4 w-4 sm:mr-1.5" />
-                                            <span className="hidden sm:inline">More</span>
+                                            <span className="text-xs sm:text-sm">More</span>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-[180px] bg-popover">
+                                        <DropdownMenuItem
+                                            className="sm:hidden cursor-pointer"
+                                            onClick={() => handleBulkUpdate({ status: "unread" })}
+                                        >
+                                            <BookOpen className="mr-2 h-4 w-4 text-blue-600" />
+                                            Mark as Unread
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="cursor-pointer"
                                             onClick={() => handleBulkUpdate({ is_favorite: true })}
@@ -339,6 +350,31 @@ export function DataTable<TValue>({
 
                 {/* Right: Actions */}
                 <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Mobile Select All */}
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        className="md:hidden flex items-center gap-2 bg-background shadow-sm h-8 px-2.5 border border-border/60 rounded-md cursor-pointer hover:bg-accent transition-colors select-none"
+                        onClick={() => {
+                            const isAllSelected = table.getIsAllPageRowsSelected();
+                            table.toggleAllPageRowsSelected(!isAllSelected);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                const isAllSelected = table.getIsAllPageRowsSelected();
+                                table.toggleAllPageRowsSelected(!isAllSelected);
+                            }
+                        }}
+                    >
+                        <Checkbox
+                            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                            className="h-4 w-4 pointer-events-none"
+                        />
+                        <span className="text-[11px] font-medium whitespace-nowrap">Select All</span>
+                    </div>
+
                     {/* Mobile Sort & Filter */}
                     <Dialog>
                         <DialogTrigger asChild>

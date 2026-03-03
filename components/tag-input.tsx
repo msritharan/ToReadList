@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, Tag as TagIcon, Check } from "lucide-react";
+import { X, Tag as TagIcon, Check, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Popover,
@@ -113,8 +113,15 @@ export function TagInput({
         }
     };
 
+    // Filter available tags to show as suggestions (excluding already added ones)
+    const availableSuggestions = React.useMemo(() => {
+        return availableTags
+            .filter((tag) => !tags.includes(tag.toLowerCase()))
+            .slice(0, 12);
+    }, [availableTags, tags]);
+
     return (
-        <div className={cn("space-y-2", className)}>
+        <div className={cn("space-y-3", className)}>
             {tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                     {tags.map((tag) => (
@@ -145,7 +152,7 @@ export function TagInput({
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
                             placeholder={tags.length > 0 ? "Add another tag..." : placeholder}
-                            className="bg-muted/30 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
+                            className="bg-muted/30 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50 h-9 text-sm"
                             autoComplete="off"
                         />
                     </div>
@@ -180,6 +187,28 @@ export function TagInput({
                     </div>
                 </PopoverContent>
             </Popover>
+
+            {/* Suggested Tags Section */}
+            {!open && availableSuggestions.length > 0 && (
+                <div className="space-y-1.5 animate-in fade-in duration-300">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold px-0.5">
+                        Suggested Tags
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                        {availableSuggestions.map((tag) => (
+                            <button
+                                key={tag}
+                                onClick={() => addTag(tag)}
+                                type="button"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/50 text-[11px] text-muted-foreground border border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all font-medium"
+                            >
+                                <Plus className="h-2.5 w-2.5" />
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
