@@ -104,7 +104,7 @@ export function TopNavbar() {
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Trash
                                 {trashCount > 0 && (
-                                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold !text-white">
                                         {trashCount > 99 ? "99+" : trashCount}
                                     </span>
                                 )}

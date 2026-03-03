@@ -58,7 +58,7 @@ function LoginContent() {
                 {/* Typography */}
                 <div className="space-y-6 mb-14 w-full flex flex-col items-center">
                     <H1 className="text-5xl sm:text-7xl lg:text-8xl pb-2 text-center text-foreground font-black tracking-tighter leading-[1.1]">
-                        ToReadList.
+                        ToReadList
                     </H1>
                     <p className="text-3xl sm:text-4xl text-center font-bold tracking-tight text-foreground/90">
                         Save it now. Read it later.

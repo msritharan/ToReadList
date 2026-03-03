@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, Clock, Download, Trash2, Loader2, ExternalLink, CheckCircle2, Unplug, Smartphone, ChevronDown, ChevronRight } from "lucide-react";
+import { Send, Clock, Download, Trash2, Loader2, ExternalLink, CheckCircle2, Unplug, Smartphone, ChevronDown, ChevronRight, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { Separator } from "@/components/ui/separator";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
@@ -152,21 +153,45 @@ export default function Settings() {
 
                                 {/* Deep Link — shown when connecting */}
                                 {telegramStatus === "connecting" && deepLink && (
-                                    <div className="mt-3 ml-13 pl-[52px]">
-                                        <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-3 space-y-2">
-                                            <Small className="text-muted-foreground">
-                                                Tap the link below to open Telegram and connect your account:
-                                            </Small>
-                                            <a
-                                                href={deepLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
-                                            >
-                                                <ExternalLink className="h-3.5 w-3.5" />
-                                                Open in Telegram
-                                            </a>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                                    <div className="mt-3">
+                                        <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-4 space-y-4">
+                                            {/* QR Code */}
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="bg-white rounded-lg p-3">
+                                                    <QRCodeSVG
+                                                        value={deepLink}
+                                                        size={160}
+                                                        level="M"
+                                                        marginSize={0}
+                                                    />
+                                                </div>
+                                                <Small className="text-muted-foreground text-center">
+                                                    Scan with your phone to link via Telegram
+                                                </Small>
+                                            </div>
+
+                                            {/* Divider with "or" */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 h-px bg-border/60" />
+                                                <span className="text-xs text-muted-foreground/50 uppercase tracking-wider">or</span>
+                                                <div className="flex-1 h-px bg-border/60" />
+                                            </div>
+
+                                            {/* Open in Telegram link */}
+                                            <div className="flex flex-col items-center gap-2">
+                                                <a
+                                                    href={deepLink}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                                                >
+                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                    Open in Telegram
+                                                </a>
+                                            </div>
+
+                                            {/* Waiting spinner */}
+                                            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
                                                 <Loader2 className="h-3 w-3 animate-spin" />
                                                 Waiting for connection...
                                             </div>

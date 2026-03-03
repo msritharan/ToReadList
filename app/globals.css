@@ -65,8 +65,8 @@
   --primary: #3d9a6a;
   /* Action */
   --primary-foreground: #ffffff;
-  --destructive: #c44040;
-  /* Danger */
+  --destructive: #ef4444;
+  /* Danger (brighter red for better visibility) */
   --destructive-foreground: #ffffff;
 
   /* Neutral surfaces and borders */
