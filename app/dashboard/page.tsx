@@ -8,6 +8,7 @@ import { columns } from "@/components/links-table/columns";
 import { AddLinkDialog } from "@/components/add-link-dialog";
 import { useLinksQuery } from "@/hooks/use-links";
 import { H1 } from "@/components/ui/typography";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 const emptyMessages: Record<string, { message: string; icon: React.ReactNode }> = {
   all: {
@@ -54,6 +55,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-full bg-background">
+      <OnboardingDialog />
       {/* Top Header */}
       <header className="flex items-center justify-between px-8 py-6 border-b border-border/40 shrink-0">
         <div className="flex-1 max-w-md relative">
