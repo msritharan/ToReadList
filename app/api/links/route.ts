@@ -43,9 +43,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (search && search.trim()) {
-        baseQuery = baseQuery.or(
-            `title.ilike.%${search}%,url.ilike.%${search}%,domain.ilike.%${search}%`
-        );
+        // Sanitize: strip PostgREST-special characters to prevent filter injection
+        const sanitizedSearch = search.replace(/[.,()]/g, "");
+        if (sanitizedSearch) {
+            baseQuery = baseQuery.or(
+                `title.ilike.%${sanitizedSearch}%,url.ilike.%${sanitizedSearch}%,domain.ilike.%${sanitizedSearch}%`
+            );
+        }
     }
 
     if (domain && domain.trim()) {
@@ -81,11 +85,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, title, description, domain, favicon_url, status = "unread", is_favorite = false, source = "manual", tags = [] } = body;
+    const { url, title, description, domain, favicon_url, status: rawStatus = "unread", is_favorite = false, source: rawSource = "manual", tags = [] } = body;
 
     if (!url) {
         return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
+
+    // Validate enum fields to prevent storing unexpected values
+    const allowedStatuses = ["unread", "read", "skipped"];
+    const allowedSources = ["manual", "telegram", "pwa"];
+    const status = allowedStatuses.includes(rawStatus) ? rawStatus : "unread";
+    const source = allowedSources.includes(rawSource) ? rawSource : "manual";
 
     const truncatedDescription = description?.slice(0, 1000) ?? null;
 

@@ -129,7 +129,7 @@ export function DataTable<TValue>({
     const availableDomains = useMemo(() => {
         const domains = new Set<string>();
         (allLinks || data).forEach((d) => {
-            if (d.domain) domains.add(d.domain);
+            if (d.domain && d.deleted_at === null) domains.add(d.domain);
         });
         return Array.from(domains).sort();
     }, [allLinks, data]);
@@ -138,7 +138,7 @@ export function DataTable<TValue>({
     const availableTags = useMemo(() => {
         const tags = new Set<string>();
         (allLinks || data).forEach((d) => {
-            if (d.tags) {
+            if (d.tags && d.deleted_at === null) {
                 d.tags.forEach((tag) => tags.add(tag));
             }
         });
@@ -157,14 +157,14 @@ export function DataTable<TValue>({
         availableTags,
         statusFilter: activeStatus,
         onStatusFilterChange: onStatusChange,
-        onColumnResize: () => {},
-        onResetColumnSizes: () => {},
+        onColumnResize: () => { },
+        onResetColumnSizes: () => { },
     };
 
     const table = useReactTable({
         data,
         columns: [selectionColumn, ...columns],
-        state: { 
+        state: {
             rowSelection,
         },
         onRowSelectionChange: setRowSelection,
@@ -187,8 +187,8 @@ export function DataTable<TValue>({
         <div className="space-y-4">
             {/* Bulk Action Bar */}
             {selectedCount > 0 && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <span className="text-sm font-medium text-primary">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                    <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
                         {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
                     </span>
                     <div className="flex items-center gap-2 ml-auto">
@@ -472,7 +472,7 @@ export function DataTable<TValue>({
                                 key={row.id}
                                 className={cn(
                                     "flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all relative overflow-hidden",
-                                    row.getIsSelected() ? "border-primary/50 bg-primary/5" : "border-border/40"
+                                    row.getIsSelected() ? "border-indigo-500/50 bg-indigo-500/5" : "border-border/40"
                                 )}
                             >
                                 {/* Top row: selection, title, actions */}
@@ -510,8 +510,8 @@ export function DataTable<TValue>({
                                     {(() => {
                                         const link = row.original;
                                         if (!link.description) return null;
-                                        const displayText = link.description.length > 100 
-                                            ? link.description.slice(0, 100) + "..." 
+                                        const displayText = link.description.length > 100
+                                            ? link.description.slice(0, 100) + "..."
                                             : link.description;
                                         return (
                                             <p className="text-sm text-muted-foreground line-clamp-1">
@@ -560,8 +560,8 @@ export function DataTable<TValue>({
                                 {table.getHeaderGroups().map((headerGroup) => (
                                     <TableRow key={headerGroup.id} className="border-border/40 hover:bg-transparent">
                                         {headerGroup.headers.map((header) => (
-                                            <TableHead 
-                                                key={header.id} 
+                                            <TableHead
+                                                key={header.id}
                                                 className="text-xs uppercase tracking-wider text-muted-foreground font-medium h-10 px-4 relative overflow-hidden align-middle"
                                                 style={{ width: header.getSize(), minWidth: header.getSize() }}
                                             >
@@ -585,8 +585,8 @@ export function DataTable<TValue>({
                                             className="group border-border/40 cursor-default hover:bg-muted/30 transition-colors h-14"
                                         >
                                             {row.getVisibleCells().map((cell) => (
-                                                <TableCell 
-                                                    key={cell.id} 
+                                                <TableCell
+                                                    key={cell.id}
                                                     className="py-2 px-4 min-w-0 overflow-hidden align-middle"
                                                     style={{ width: cell.column.getSize() }}
                                                 >

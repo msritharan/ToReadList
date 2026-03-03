@@ -44,7 +44,7 @@ function LoginContent() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
                     </span>
-                    Designed for Telegram
+                    Available on iOS, Android & Telegram
                 </div>
 
                 {/* Hero Icon */}
@@ -56,12 +56,15 @@ function LoginContent() {
                 </div>
 
                 {/* Typography */}
-                <div className="space-y-8 mb-14 w-full flex flex-col items-center">
+                <div className="space-y-6 mb-14 w-full flex flex-col items-center">
                     <H1 className="text-5xl sm:text-7xl lg:text-8xl pb-2 text-center text-foreground font-black tracking-tighter leading-[1.1]">
-                        Your Reading, <br className="hidden sm:inline" /> Organized.
+                        ToReadList.
                     </H1>
-                    <Lead className="text-xl sm:text-2xl max-w-2xl text-center leading-relaxed font-light">
-                        Send links via Telegram, read them later in a beautifully minimal space. No clutter, just focus.
+                    <p className="text-3xl sm:text-4xl text-center font-bold tracking-tight text-foreground/90">
+                        Save it now. Read it later.
+                    </p>
+                    <Lead className="text-xl sm:text-2xl max-w-2xl text-center leading-relaxed font-light text-muted-foreground pb-2">
+                        Easily save articles using the native share menu on your iPhone or Android device, or by sending a link to our Telegram bot. Get back to your reading in a beautifully clean, distraction-free space.
                     </Lead>
                 </div>
 

@@ -49,16 +49,17 @@
 
 :root {
   --radius: 0.75rem;
-  /* Light Mode - Warm & Easy on Eyes */
-  --background: #f3efe9;
-  /* Warm linen */
-  --foreground: #1c1917;
-  /* Near black */
-  --card: #faf8f5;
-  /* Slightly lighter linen */
-  --card-foreground: #1c1917;
-  --popover: #faf8f5;
-  --popover-foreground: #1c1917;
+  /* Light Mode - Mellow Neutral */
+  --background: #ffffff;
+  /* Soft mellow background */
+  --foreground: #09090b;
+  /* Dark soft gray text */
+  --card: #ffffff;
+  /* Consistent with background */
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  /* Consistent with background */
+  --popover-foreground: #09090b;
 
   /* The 4 Accent Colors */
   --primary: #3d9a6a;
@@ -69,16 +70,17 @@
   --destructive-foreground: #ffffff;
 
   /* Neutral surfaces and borders */
-  --secondary: #e5e0d8;
-  --secondary-foreground: #1c1917;
-  --muted: #e5e0d8;
-  --muted-foreground: #78716c;
-  /* Warm gray */
-  --accent: #e5e0d8;
-  --accent-foreground: #1c1917;
-  --border: #ddd6cc;
-  /* Subtle warm divider */
-  --input: #ddd6cc;
+  --secondary: #f4f4f5;
+  /* Mellow secondary element background */
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  /* Higher contrast gray text */
+  --accent: #f4f4f5;
+  --accent-foreground: #09090b;
+  --border: #e4e4e7;
+  /* Soft mellow divider */
+  --input: #e4e4e7;
   --ring: #3d9a6a;
 
   /* Charts */
@@ -90,17 +92,18 @@
   /* Warm */
   --chart-4: #c44040;
   /* Danger */
-  --chart-5: #1c1917;
+  --chart-5: #09090b;
   /* Neutral */
 
   /* Sidebar */
-  --sidebar: #faf8f5;
-  --sidebar-foreground: #1c1917;
+  --sidebar: #ffffff;
+  /* Consistent with background */
+  --sidebar-foreground: #09090b;
   --sidebar-primary: #3d9a6a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e5e0d8;
-  --sidebar-accent-foreground: #1c1917;
-  --sidebar-border: #ddd6cc;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #09090b;
+  --sidebar-border: #e4e4e7;
   --sidebar-ring: #3d9a6a;
 }
 

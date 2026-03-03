@@ -27,6 +27,7 @@ export interface LinksQueryResult {
     total: number;
     totalPages: number;
     isLoading: boolean;
+    availableTags: string[];
     queryState: LinksQueryState;
     setPage: (page: number) => void;
     setLimit: (limit: PageSizeOption) => void;
@@ -144,6 +145,14 @@ export function useLinksQuery(): LinksQueryResult {
             totalPages: totalPgs,
         };
     }, [allLinks, queryState]);
+
+    const availableTags = useMemo(() => {
+        const tags = new Set<string>();
+        allLinks.filter(l => l.deleted_at === null).forEach((l) => {
+            if (l.tags) l.tags.forEach((t) => tags.add(t));
+        });
+        return Array.from(tags).sort();
+    }, [allLinks]);
 
 
     // --- State setters ---
@@ -350,6 +359,7 @@ export function useLinksQuery(): LinksQueryResult {
         total,
         totalPages,
         isLoading: isFetchingLinks,
+        availableTags,
         queryState,
         setPage,
         setLimit,

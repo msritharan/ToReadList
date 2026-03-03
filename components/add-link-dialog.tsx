@@ -15,6 +15,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { LinkItem } from "@/types";
+import { TagInput } from "./tag-input";
 
 interface AddLinkDialogProps {
     onAddLink: (link: Omit<LinkItem, "id" | "created_at">) => void;
@@ -22,6 +23,7 @@ interface AddLinkDialogProps {
     initialUrl?: string;
     initialTitle?: string;
     initialDescription?: string;
+    availableTags?: string[];
 }
 
 function extractDomain(url: string): string {
@@ -41,7 +43,7 @@ function isValidUrl(str: string): boolean {
     }
 }
 
-export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitle = "", initialDescription = "" }: AddLinkDialogProps) {
+export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitle = "", initialDescription = "", availableTags = [] }: AddLinkDialogProps) {
     const [open, setOpen] = useState(false);
     const [url, setUrl] = useState(initialUrl);
     const [title, setTitle] = useState(initialTitle);
@@ -224,12 +226,11 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
                                 (comma separated)
                             </span>
                         </label>
-                        <Input
-                            id="tags"
-                            placeholder="work, tech, reading"
+                        <TagInput
+                            availableTags={availableTags}
                             value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                            className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
+                            onChange={setTags}
+                            placeholder="work, tech, reading"
                         />
                     </div>
 

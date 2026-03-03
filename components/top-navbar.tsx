@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, Settings, LogOut, User, Trash2 } from "lucide-react";
+import { BookOpen, Settings, LogOut, User, Trash2, MessageCircleQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTrash } from "@/hooks/use-trash";
+import { SupportDialog } from "@/components/support-dialog";
 
 interface UserInfo {
     name: string;
@@ -109,6 +110,16 @@ export function TopNavbar() {
                                 )}
                             </Link>
                         </DropdownMenuItem>
+                        <SupportDialog
+                            userName={user?.name}
+                            userEmail={user?.email}
+                            trigger={
+                                <DropdownMenuItem className="cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                                    <MessageCircleQuestion className="mr-2 h-4 w-4" />
+                                    Support
+                                </DropdownMenuItem>
+                            }
+                        />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"

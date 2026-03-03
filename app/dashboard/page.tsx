@@ -49,6 +49,7 @@ export default function Dashboard() {
     bulkUpdateLinks,
     deleteLink,
     bulkDeleteLinks,
+    availableTags,
   } = useLinksQuery();
 
   return (
@@ -67,6 +68,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <AddLinkDialog
             onAddLink={addLink}
+            availableTags={availableTags}
             trigger={
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all gap-2">
                 <Plus className="h-4 w-4" />

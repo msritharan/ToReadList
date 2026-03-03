@@ -12,8 +12,9 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { ids } = body;
 
-    if (!Array.isArray(ids) || ids.length === 0) {
-        return NextResponse.json({ error: "ids array is required" }, { status: 400 });
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id: unknown) => typeof id === "string" && uuidRegex.test(id))) {
+        return NextResponse.json({ error: "ids must be a non-empty array of valid UUIDs" }, { status: 400 });
     }
 
     const { error } = await supabase

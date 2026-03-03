@@ -19,6 +19,8 @@ import {
     Undo2,
     Trash2,
     Tag,
+    Pencil,
+    Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,20 +50,21 @@ import {
 import { LinkItem } from "@/types";
 import { SortOrder, LinkStatus } from "@/hooks/use-links";
 import { cn } from "@/lib/utils";
+import { TagInput } from "../tag-input";
 
 // ─── Tag color utilities ───────────────────────────────────────────────────────
 
 const TAG_COLORS = [
-    { bg: "bg-blue-500/15", text: "text-blue-400", border: "border-blue-500/20" },
-    { bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/20" },
-    { bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/20" },
-    { bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/20" },
-    { bg: "bg-cyan-500/15", text: "text-cyan-400", border: "border-cyan-500/20" },
-    { bg: "bg-indigo-500/15", text: "text-indigo-400", border: "border-indigo-500/20" },
-    { bg: "bg-purple-500/15", text: "text-purple-400", border: "border-purple-500/20" },
-    { bg: "bg-pink-500/15", text: "text-pink-400", border: "border-pink-500/20" },
-    { bg: "bg-teal-500/15", text: "text-teal-400", border: "border-teal-500/20" },
-    { bg: "bg-orange-500/15", text: "text-orange-400", border: "border-orange-500/20" },
+    { bg: "bg-muted", text: "text-blue-600 dark:text-blue-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-emerald-600 dark:text-emerald-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-amber-600 dark:text-amber-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-rose-600 dark:text-rose-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-cyan-600 dark:text-cyan-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-indigo-600 dark:text-indigo-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-purple-600 dark:text-purple-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-pink-600 dark:text-pink-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-teal-600 dark:text-teal-400", border: "border-border" },
+    { bg: "bg-muted", text: "text-orange-600 dark:text-orange-400", border: "border-border" },
 ];
 
 function getTagColor(tag: string) {
@@ -128,15 +131,15 @@ const statusConfig: Record<
 > = {
     unread: {
         label: "Unread",
-        className: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+        className: "bg-muted text-blue-600 dark:text-blue-400 border-border",
     },
     read: {
         label: "Read",
-        className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+        className: "bg-muted text-emerald-600 dark:text-emerald-400 border-border",
     },
     skipped: {
         label: "Skipped",
-        className: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+        className: "bg-muted text-orange-600 dark:text-orange-400 border-border",
     },
 };
 
@@ -451,10 +454,10 @@ function DescriptionCell({ description, variant = "desktop" }: DescriptionCellPr
     const [isExpanded, setIsExpanded] = useState(false);
     const shouldTruncateDesktop = description.length > 150;
     const shouldTruncateMobile = description.length > 100;
-    
+
     const shouldTruncate = variant === "mobile" ? shouldTruncateMobile : shouldTruncateDesktop;
     const truncateLength = variant === "mobile" ? 100 : 150;
-    
+
     const displayText = isExpanded || !shouldTruncate
         ? description
         : description.slice(0, truncateLength) + "...";
@@ -488,7 +491,17 @@ function DescriptionCell({ description, variant = "desktop" }: DescriptionCellPr
     );
 }
 
-function TagEditMenuItem({ link, onUpdate }: { link: LinkItem; onUpdate: (id: string, updates: Partial<LinkItem>) => void }) {
+function TagEditDialog({
+    link,
+    onUpdate,
+    availableTags,
+    trigger
+}: {
+    link: LinkItem;
+    onUpdate: (id: string, updates: Partial<LinkItem>) => void;
+    availableTags: string[];
+    trigger: React.ReactNode;
+}) {
     const [open, setOpen] = useState(false);
     const [tags, setTags] = useState(link.tags?.join(", ") || "");
 
@@ -504,38 +517,49 @@ function TagEditMenuItem({ link, onUpdate }: { link: LinkItem; onUpdate: (id: st
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <DropdownMenuItem className="cursor-pointer" onSelect={(e) => e.preventDefault()}>
-                    <Tag className="mr-2 h-4 w-4 text-violet-500" />
-                    Edit Tags
-                </DropdownMenuItem>
+                {trigger}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[400px] bg-card border-border/40">
                 <DialogHeader>
                     <DialogTitle>Edit Tags</DialogTitle>
                     <DialogDescription>
-                        Add or remove tags for this link. Tags are comma separated.
+                        Add or remove tags for this link.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    <Input
-                        placeholder="work, tech, reading"
+                    <TagInput
+                        availableTags={availableTags}
                         value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSave();
-                        }}
+                        onChange={setTags}
+                        placeholder="work, tech, reading"
                     />
                 </div>
                 <DialogFooter>
-                    <Button variant="ghost" onClick={() => setOpen(false)}>
+                    <Button variant="ghost" onClick={() => setOpen(false)} className="text-muted-foreground">
                         Cancel
                     </Button>
-                    <Button onClick={handleSave}>
-                        Save
+                    <Button onClick={handleSave} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        Save Changes
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function TagEditMenuItem({ link, onUpdate, availableTags }: { link: LinkItem; onUpdate: (id: string, updates: Partial<LinkItem>) => void; availableTags: string[] }) {
+    return (
+        <TagEditDialog
+            link={link}
+            onUpdate={onUpdate}
+            availableTags={availableTags}
+            trigger={
+                <DropdownMenuItem className="cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                    <Tag className="mr-2 h-4 w-4 text-violet-500" />
+                    Edit Tags
+                </DropdownMenuItem>
+            }
+        />
     );
 }
 
@@ -597,25 +621,55 @@ export const columns: ColumnDef<LinkItem>[] = [
         header: (ctx) => <span className="text-center block w-full"><TagFilterHeader {...ctx} /></span>,
         size: 120,
         minSize: 80,
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             const tags = row.original.tags;
-            if (!tags || tags.length === 0) return <span className="text-muted-foreground text-sm text-center block w-full">—</span>;
+            const meta = table.options.meta as DataTableMeta;
+            const hasTags = tags && tags.length > 0;
+
             return (
-                <div className="text-center">
-                    <div className="flex flex-wrap justify-center gap-1">
-                        {tags.slice(0, 3).map((tag) => {
-                            const color = getTagColor(tag);
-                            return (
-                                <span
-                                    key={tag}
-                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${color.bg} ${color.text} border ${color.border}`}
-                                >
-                                    {tag}
-                                </span>
-                            );
-                        })}
-                        {tags.length > 3 && (
-                            <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+                <div className="text-center group/tag-cell">
+                    <div className="flex flex-wrap justify-center gap-1 items-center min-h-[24px]">
+                        {hasTags ? (
+                            <>
+                                {tags.slice(0, 3).map((tag) => {
+                                    const color = getTagColor(tag);
+                                    return (
+                                        <span
+                                            key={tag}
+                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${color.bg} ${color.text} border ${color.border}`}
+                                        >
+                                            {tag}
+                                        </span>
+                                    );
+                                })}
+                                {tags.length > 3 && (
+                                    <span className="text-[10px] text-muted-foreground">+{tags.length - 3}</span>
+                                )}
+                            </>
+                        ) : (
+                            <span className="text-muted-foreground text-xs opacity-0 group-hover/tag-cell:opacity-100 transition-opacity">—</span>
+                        )}
+
+                        {!meta.isTrashView && (
+                            <TagEditDialog
+                                link={row.original}
+                                onUpdate={meta.onLinkUpdate}
+                                availableTags={meta.availableTags}
+                                trigger={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn(
+                                            "h-5 w-5 ml-1 transition-all",
+                                            hasTags
+                                                ? "opacity-0 group-hover/tag-cell:opacity-100 hover:bg-primary/20 hover:text-primary"
+                                                : "opacity-0 group-hover/tag-cell:opacity-100 bg-muted/50 hover:bg-primary/20 hover:text-primary"
+                                        )}
+                                    >
+                                        {hasTags ? <Pencil className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                                    </Button>
+                                }
+                            />
                         )}
                     </div>
                 </div>
@@ -739,7 +793,11 @@ export const columns: ColumnDef<LinkItem>[] = [
 
                                     <DropdownMenuSeparator />
 
-                                    <TagEditMenuItem link={link} onUpdate={meta.onLinkUpdate} />
+                                    <TagEditMenuItem
+                                        link={link}
+                                        onUpdate={meta.onLinkUpdate}
+                                        availableTags={meta.availableTags}
+                                    />
 
                                     <DropdownMenuSeparator />
 
@@ -767,6 +825,7 @@ export const selectionColumn: ColumnDef<LinkItem> = {
     header: ({ table }) => (
         <div className="text-center">
             <Checkbox
+                className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 dark:data-[state=checked]:bg-indigo-500 dark:data-[state=checked]:border-indigo-500"
                 checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
                 onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                 aria-label="Select all"
@@ -776,6 +835,7 @@ export const selectionColumn: ColumnDef<LinkItem> = {
     cell: ({ row }) => (
         <div className="text-center">
             <Checkbox
+                className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 dark:data-[state=checked]:bg-indigo-500 dark:data-[state=checked]:border-indigo-500"
                 checked={row.getIsSelected()}
                 onCheckedChange={(value) => row.toggleSelected(!!value)}
                 aria-label="Select row"

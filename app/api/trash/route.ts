@@ -31,13 +31,16 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     let idsToDelete: string[] | undefined;
     try {
         const text = await request.text();
-        console.log("body text:", text);
         const body = text ? JSON.parse(text) : null;
         if (body && Array.isArray(body.ids) && body.ids.length > 0) {
-            idsToDelete = body.ids;
+            // Validate that all ids are valid UUIDs
+            if (body.ids.every((id: unknown) => typeof id === "string" && uuidRegex.test(id))) {
+                idsToDelete = body.ids;
+            }
         }
     } catch (e) {
         console.log("JSON parse error:", e);
