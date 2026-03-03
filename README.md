@@ -63,7 +63,7 @@ Every link you save gets its **title, description, and favicon** auto-extracted 
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/your-username/toreadlist.git
+git clone https://github.com/msritharan/to-read-list-app.git
 cd toreadlist
 npm install
 ```
@@ -127,4 +127,4 @@ supabase/           # Database migrations
 
 ## License
 
-This project is private and not currently open-sourced.
+This project is licensed under the [MIT License](LICENSE) — you're free to use, modify, and distribute it.

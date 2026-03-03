@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { H1, Lead } from "@/components/ui/typography";
@@ -38,13 +38,24 @@ function LoginContent() {
             {/* Main Content */}
             <main className="relative z-10 w-full max-w-5xl px-6 py-12 lg:px-8 flex flex-col items-center justify-center text-center mx-auto my-auto animate-in slide-in-from-bottom-8 fade-in duration-1000 ease-out fill-mode-both">
 
-                {/* Top Badge */}
-                <div className="mb-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-400 text-sm font-medium tracking-wide shadow-[0_0_15px_rgba(14,165,233,0.1)]">
-                    <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
-                    </span>
-                    Available on iOS, Android & Telegram
+                {/* Top Badges */}
+                <div className="mb-10 flex flex-wrap items-center justify-center gap-3">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-400 text-sm font-medium tracking-wide shadow-[0_0_15px_rgba(14,165,233,0.1)]">
+                        <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
+                        </span>
+                        Available on iOS, Android & Telegram
+                    </div>
+                    <a
+                        href="https://github.com/msritharan/to-read-list-app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-sm font-medium tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 group"
+                    >
+                        <Github className="h-4 w-4 transition-transform group-hover:scale-110 duration-300" />
+                        Open Source
+                    </a>
                 </div>
 
                 {/* Hero Icon */}
@@ -103,7 +114,16 @@ function LoginContent() {
             </main>
 
             {/* Footer */}
-            <footer className="absolute bottom-8 w-full text-center z-10 flex justify-center">
+            <footer className="absolute bottom-8 w-full text-center z-10 flex flex-col items-center gap-2">
+                <a
+                    href="https://github.com/msritharan/to-read-list-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground/40 hover:text-muted-foreground/80 transition-colors duration-300 group"
+                >
+                    <Github className="h-4 w-4 transition-transform group-hover:scale-110 duration-300" />
+                    Star on GitHub
+                </a>
                 <p className="text-sm font-medium text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors duration-300">
                     &copy; {new Date().getFullYear()} ToReadList.
                 </p>
