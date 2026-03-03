@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
     const hashtags = extractHashtags(messageText);
 
     if (profile.pending_tag_link_id) {
-        await handleWaitingForTags(supabase, profile, urls, hashtags);
+        await handleWaitingForTags(supabase, profile, urls, hashtags, messageText);
     } else {
-        await handleIdleState(supabase, profile, urls, hashtags);
+        await handleIdleState(supabase, profile, urls);
     }
 
     return NextResponse.json({ ok: true });
@@ -87,8 +87,7 @@ async function getProfile(supabase: ReturnType<typeof createAdminClient>, chatId
 async function handleIdleState(
     supabase: ReturnType<typeof createAdminClient>,
     profile: { id: string; pending_tag_link_id: string | null },
-    urls: string[],
-    hashtags: string[]
+    urls: string[]
 ) {
     const chatId = Number((await supabase.from("profiles").select("telegram_chat_id").eq("id", profile.id).single()).data?.telegram_chat_id);
 
@@ -111,7 +110,7 @@ async function handleIdleState(
     const title = savedLink.title ?? "your link";
     await sendMessage(
         chatId,
-        `✅ Saved: "${title}"\n\nAdd tags (e.g., #work #tech) or send another link.`
+        `✅ Saved: "${title}"\n\nReply with #tags, or use /title <new title> and /desc <new description> to edit details.`
     );
 }
 
@@ -119,7 +118,8 @@ async function handleWaitingForTags(
     supabase: ReturnType<typeof createAdminClient>,
     profile: { id: string; pending_tag_link_id: string | null },
     urls: string[],
-    hashtags: string[]
+    hashtags: string[],
+    messageText: string
 ) {
     const chatId = Number((await supabase.from("profiles").select("telegram_chat_id").eq("id", profile.id).single()).data?.telegram_chat_id);
 
@@ -140,7 +140,7 @@ async function handleWaitingForTags(
         const title = savedLink.title ?? "your link";
         await sendMessage(
             chatId,
-            `✅ Saved: "${title}"\n\nAdd tags (e.g., #work #tech) or send another link.`
+            `✅ Saved: "${title}"\n\nReply with #tags, or use /title <new title> and /desc <new description> to edit details.`
         );
         return;
     }
@@ -166,9 +166,35 @@ async function handleWaitingForTags(
         return;
     }
 
+    // Handle /title command
+    if (messageText.startsWith("/title ")) {
+        const newTitle = messageText.slice(7).trim();
+        if (newTitle) {
+            await supabase
+                .from("links")
+                .update({ title: newTitle })
+                .eq("id", profile.pending_tag_link_id);
+            await sendMessage(chatId, `✅ Title updated. Reply with #tags or send another link.`);
+        }
+        return;
+    }
+
+    // Handle /desc command
+    if (messageText.startsWith("/desc ")) {
+        const newDesc = messageText.slice(6).trim();
+        if (newDesc) {
+            await supabase
+                .from("links")
+                .update({ description: newDesc })
+                .eq("id", profile.pending_tag_link_id);
+            await sendMessage(chatId, `✅ Description updated. Reply with #tags or send another link.`);
+        }
+        return;
+    }
+
     await sendMessage(
         chatId,
-        "Add tags (e.g., #work #tech) or send another link."
+        "Reply with #tags, or use /title <new title> and /desc <new description> to edit details."
     );
 }
 
@@ -289,7 +315,9 @@ async function sendHelpMessage(chatId: number) {
         "Use #hashtags to add tags to your links\\.\n\n" +
         "*Commands:*\n" +
         "/start — Connect your account\n" +
-        "/help — Show this message\n\n" +
+        "/help — Show this message\n" +
+        "/title <text> — Edit title of the last saved link\n" +
+        "/desc <text> — Edit description of the last saved link\n\n" +
         "Manage your links at toreadlist\\.app",
         { parse_mode: "MarkdownV2" }
     );

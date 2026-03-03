@@ -27,3 +27,21 @@ export async function createClient() {
         }
     );
 }
+
+/**
+ * Fast session-based auth for API routes.
+ * Reads the session from cookies locally (no network call to Supabase).
+ * Safe to use behind middleware that already validates the session via getUser().
+ */
+export async function createClientWithSession() {
+    const supabase = await createClient();
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+
+    return {
+        supabase,
+        user: session?.user ?? null,
+    };
+}
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientWithSession } from "@/lib/supabase/server";
 
 /**
  * POST /api/verify/disconnect
@@ -7,10 +7,7 @@ import { createClient } from "@/lib/supabase/server";
  * Disconnects the user's Telegram account.
  */
 export async function POST() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientWithSession();
 
     if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

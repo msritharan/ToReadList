@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientWithSession } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
 
 /**
@@ -9,10 +9,7 @@ import { randomBytes } from "crypto";
  * Returns the deep link URL that the user taps to connect.
  */
 export async function POST() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientWithSession();
 
     if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

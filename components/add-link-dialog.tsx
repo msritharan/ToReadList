@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Globe, Loader2, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Dialog,
     DialogContent,
@@ -44,7 +45,7 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
     const [open, setOpen] = useState(false);
     const [url, setUrl] = useState(initialUrl);
     const [title, setTitle] = useState(initialTitle);
-    const [description] = useState(initialDescription);
+    const [description, setDescription] = useState(initialDescription);
     const [tags, setTags] = useState("");
     const [isExtracting, setIsExtracting] = useState(false);
 
@@ -61,23 +62,43 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
         : "";
     const urlValid = isValidUrl(url);
 
-    // Auto-generate a title placeholder from the URL when no custom title is provided
+    // Auto-fetch metadata when the URL is valid
     useEffect(() => {
-        if (url && urlValid && !title) {
-            // Push update to next tick to avoid synchronous update in render
-            const initialTimer = setTimeout(() => setIsExtracting(true), 0);
-            const extractTimer = setTimeout(() => {
+        let isMounted = true;
+
+        const fetchMetadata = async () => {
+            if (!url || !urlValid) {
                 setIsExtracting(false);
-            }, 600);
-            return () => {
-                clearTimeout(initialTimer);
-                clearTimeout(extractTimer);
-            };
-        } else {
-            const timer = setTimeout(() => setIsExtracting(false), 0);
-            return () => clearTimeout(timer);
-        }
-    }, [url, urlValid, title]);
+                return;
+            }
+
+            // Only auto-fetch if we haven't manually edited
+            // Simple heuristic to prevent overwriting user input
+            if (title || description) return;
+
+            setIsExtracting(true);
+            try {
+                const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (isMounted) {
+                        if (data.title && !title) setTitle(data.title);
+                        if (data.description && !description) setDescription(data.description);
+                    }
+                }
+            } catch (err) {
+                console.warn("[AddLinkDialog] Failed to fetch metadata:", err);
+            } finally {
+                if (isMounted) setIsExtracting(false);
+            }
+        };
+
+        const timer = setTimeout(fetchMetadata, 500); // debounce
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [url, urlValid, title, description]);
 
     const handleSubmit = () => {
         if (!url || !urlValid) return;
@@ -110,6 +131,7 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
         if (!newOpen) {
             setUrl("");
             setTitle("");
+            setDescription("");
             setTags("");
         }
     };
@@ -168,6 +190,26 @@ export function AddLinkDialog({ onAddLink, trigger, initialUrl = "", initialTitl
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50"
+                        />
+                    </div>
+
+                    {/* Description Input */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="description"
+                            className="text-sm font-medium text-foreground"
+                        >
+                            Description{" "}
+                            <span className="text-muted-foreground font-normal">
+                                (optional)
+                            </span>
+                        </label>
+                        <Textarea
+                            id="description"
+                            placeholder="Enter a description..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="bg-muted/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/50 min-h-[80px] resize-y"
                         />
                     </div>
 

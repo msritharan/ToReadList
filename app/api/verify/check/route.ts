@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientWithSession } from "@/lib/supabase/server";
 
 /**
  * GET /api/verify/check
@@ -8,10 +8,7 @@ import { createClient } from "@/lib/supabase/server";
  * Used by the Settings page to detect when linking completes.
  */
 export async function GET() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientWithSession();
 
     if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

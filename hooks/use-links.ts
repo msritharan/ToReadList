@@ -97,7 +97,7 @@ export function useLinksQuery(): LinksQueryResult {
         // Apply Tag Filter
         if (queryState.tagFilter.trim()) {
             const lowerTag = queryState.tagFilter.toLowerCase();
-            filtered = filtered.filter((l) => 
+            filtered = filtered.filter((l) =>
                 l.tags?.some((tag) => tag.toLowerCase() === lowerTag)
             );
         }
@@ -201,9 +201,35 @@ export function useLinksQuery(): LinksQueryResult {
             if (!res.ok) throw new Error("Failed to add link");
             return res.json();
         },
-        onSuccess: (addedLink) => {
+        onMutate: async (newLink) => {
+            await queryClient.cancelQueries({ queryKey: ["links"] });
+            const previousLinks = queryClient.getQueryData<LinkItem[]>(["links"]);
+
+            // Create an optimistic record with a temporary ID
+            const optimisticLink: LinkItem = {
+                ...newLink,
+                id: `temp-${Date.now()}`,
+                created_at: new Date().toISOString(),
+                deleted_at: null,
+            } as LinkItem;
+
             queryClient.setQueryData<LinkItem[]>(["links"], (old) => {
-                return [(addedLink as LinkItem), ...(old || [])];
+                return [optimisticLink, ...(old || [])];
+            });
+
+            return { previousLinks, tempId: optimisticLink.id };
+        },
+        onError: (_err, _newLink, context) => {
+            if (context?.previousLinks) {
+                queryClient.setQueryData(["links"], context.previousLinks);
+            }
+        },
+        onSuccess: (addedLink, _variables, context) => {
+            // Replace the temp record with the real server record
+            queryClient.setQueryData<LinkItem[]>(["links"], (old) => {
+                return old?.map((link) =>
+                    link.id === context?.tempId ? (addedLink as LinkItem) : link
+                ) ?? [];
             });
         },
     });
