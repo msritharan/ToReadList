@@ -8,7 +8,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     const isLandingPage = pathname === "/";
 
     if (isLandingPage) {
-        return <>{children}</>;
+        // The app shell locks body scrolling and provides its own scroll area.
+        // The landing page needs a scroll container too, especially on mobile.
+        return <div className="h-full w-full overflow-y-auto">{children}</div>;
     }
 
     return (

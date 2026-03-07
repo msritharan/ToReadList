@@ -22,7 +22,7 @@ function LoginContent() {
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background overflow-hidden selection:bg-primary/30">
+        <div className="relative flex min-h-svh w-full flex-col items-center bg-background overflow-x-hidden selection:bg-primary/30">
             {/* Background Effects */}
             <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
                 {/* Radial gradient grid */}
@@ -36,7 +36,7 @@ function LoginContent() {
             </div>
 
             {/* Main Content */}
-            <main className="relative z-10 w-full max-w-5xl px-6 py-12 lg:px-8 flex flex-col items-center justify-center text-center mx-auto my-auto animate-in slide-in-from-bottom-8 fade-in duration-1000 ease-out fill-mode-both">
+            <main className="relative z-10 w-full max-w-5xl px-6 pt-12 lg:px-8 flex flex-1 flex-col items-center justify-center text-center mx-auto animate-in slide-in-from-bottom-8 fade-in duration-1000 ease-out fill-mode-both">
 
                 {/* Top Badges */}
                 <div className="mb-10 flex flex-wrap items-center justify-center gap-3">
@@ -114,7 +114,7 @@ function LoginContent() {
             </main>
 
             {/* Footer */}
-            <footer className="absolute bottom-8 w-full text-center z-10 flex flex-col items-center gap-2">
+            <footer className="w-full text-center z-10 flex flex-col items-center gap-2 pt-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
                 <a
                     href="https://github.com/msritharan/to-read-list-app"
                     target="_blank"
