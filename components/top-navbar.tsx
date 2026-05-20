@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, Settings, LogOut, User, Trash2, MessageCircleQuestion } from "lucide-react";
+import { BookOpen, Settings, LogOut, User, Trash2, MessageCircleQuestion, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -12,7 +12,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { LinkItem } from "@/types";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTrash } from "@/hooks/use-trash";
 import { SupportDialog } from "@/components/support-dialog";
@@ -27,6 +29,45 @@ export function TopNavbar() {
     const router = useRouter();
     const [user, setUser] = useState<UserInfo | null>(null);
     const { trashCount } = useTrash();
+
+    // Reuse the same ["links"] cache from the dashboard — no extra fetch if already loaded
+    const { data: allLinks = [] } = useQuery<LinkItem[]>({
+        queryKey: ["links"],
+        queryFn: async () => {
+            const res = await fetch(`/api/links?limit=2000`);
+            if (!res.ok) throw new Error("Failed to fetch links");
+            const json = await res.json();
+            return json.data ?? [];
+        },
+    });
+
+    const handleExportJson = useCallback(() => {
+        const linksToExport = allLinks
+            .filter((l) => l.deleted_at === null)
+            .map((l) => ({
+                url: l.url,
+                title: l.title,
+                description: l.description || null,
+                domain: l.domain,
+                status: l.status,
+                is_favorite: l.is_favorite,
+                tags: l.tags || [],
+                reading_time_mins: l.reading_time_mins || null,
+                created_at: l.created_at,
+                read_at: l.read_at || null,
+            }));
+
+        const jsonString = JSON.stringify(linksToExport, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `reading-list-export-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+    }, [allLinks]);
 
     useEffect(() => {
         const supabase = createClient();
@@ -120,6 +161,10 @@ export function TopNavbar() {
                                 </DropdownMenuItem>
                             }
                         />
+                        <DropdownMenuItem className="cursor-pointer" onClick={handleExportJson}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export JSON
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
